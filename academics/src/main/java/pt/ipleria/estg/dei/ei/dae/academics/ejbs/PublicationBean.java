@@ -19,7 +19,7 @@ import java.util.UUID;
 
 @Stateless
 public class PublicationBean {
-    @PersistenceContext
+  /*  @PersistenceContext
     private EntityManager em;
 
     public Publication create(String owner, Publication p) {
@@ -116,5 +116,5 @@ public class PublicationBean {
         return em.createQuery("SELECT h FROM PublicationHistory h WHERE h.publicationId = :pid ORDER BY h.editDate DESC", PublicationHistory.class)
                 .setParameter("pid", publicationId)
                 .getResultList();
-    }
+    }*/
 }

@@ -24,7 +24,7 @@ import java.nio.charset.StandardCharsets;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class PublicationService {
-
+/*
     @EJB
     private PublicationBean publicationBean;
 
@@ -158,5 +158,5 @@ public class PublicationService {
             }
         } catch (Exception ignored) {}
         return null;
-    }
+    }*/
 }
