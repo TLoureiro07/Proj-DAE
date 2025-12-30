@@ -184,7 +184,9 @@ public class PublicationService {
     private String extractFileName(InputPart part) {
         try {
             java.util.Map<String, java.util.List<String>> headers = part.getHeaders();
-            String contentDisp = headers.getFirst("Content-Disposition");
+            java.util.List<String> contentDispList = headers.get("Content-Disposition");
+            if (contentDispList == null || contentDispList.isEmpty()) return null;
+            String contentDisp = contentDispList.get(0);
             if (contentDisp == null) return null;
             for (String cd : contentDisp.split(";")) {
                 cd = cd.trim();
