@@ -14,6 +14,7 @@ import pt.ipleria.estg.dei.ei.dae.academics.ejbs.UserBean;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.User;
 import pt.ipleria.estg.dei.ei.dae.academics.security.Authenticated;
 import pt.ipleria.estg.dei.ei.dae.academics.security.TokenIssuer;
+import jakarta.annotation.security.PermitAll;
 
 import java.util.Map;
 
@@ -33,6 +34,7 @@ public class AuthService {
      */
     @POST
     @Path("/login")
+    @PermitAll
     public Response login(LoginDTO dto) {
 
         if (dto == null || dto.username == null || dto.password == null) {
