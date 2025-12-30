@@ -1,54 +1,145 @@
 <template>
-  <div>
-    <h1>Criar Publicação</h1>
-    
-    <div v-if="submitting">A criar publicação...</div>
-    <div v-else-if="success">
-      <p style="color: green;">Publicação criada com sucesso!</p>
-      <nuxt-link :to="`/publications/${publicationId}`">Ver publicação</nuxt-link>
+  <div class="create-publication">
+    <div class="page-header">
+      <h1>➕ Criar Nova Publicação</h1>
+      <p>Adiciona uma nova publicação científica à plataforma</p>
     </div>
-    <div v-else>
-      <form @submit.prevent="createPublication">
-        <div style="margin: 15px 0;">
-          <label>Título: *</label>
-          <input v-model="form.title" type="text" required style="width: 100%; padding: 5px;" />
+
+    <div v-if="submitting" class="loading-state">
+      <p>⏳ A criar publicação...</p>
+    </div>
+
+    <div v-else-if="success" class="success-state">
+      <div class="success-card">
+        <h2>✅ Publicação criada com sucesso!</h2>
+        <p>A tua publicação foi adicionada à plataforma.</p>
+        <div class="success-actions">
+          <nuxt-link :to="`/publications/${publicationId}`" class="btn btn-primary">Ver Publicação</nuxt-link>
+          <nuxt-link to="/publications" class="btn btn-secondary">Voltar à Lista</nuxt-link>
         </div>
-        
-        <div style="margin: 15px 0;">
-          <label>Área Científica:</label>
-          <input v-model="form.scientificArea" type="text" placeholder="Ex: Ciência de Dados" style="width: 100%; padding: 5px;" />
+      </div>
+    </div>
+
+    <div v-else class="form-container">
+      <form @submit.prevent="createPublication" class="publication-form">
+        <div class="form-section">
+          <h2>📄 Informações Básicas</h2>
+          
+          <div class="form-group">
+            <label for="title">Título *</label>
+            <input 
+              id="title"
+              v-model="form.title" 
+              type="text" 
+              required 
+              placeholder="Ex: Deep Learning Applications in Medical Imaging"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="scientificArea">Área Científica</label>
+            <input 
+              id="scientificArea"
+              v-model="form.scientificArea" 
+              type="text" 
+              placeholder="Ex: Ciência de Dados, Ciência dos Materiais"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="authors">Autores (um por linha)</label>
+            <textarea 
+              id="authors"
+              v-model="authorsText" 
+              rows="3" 
+              placeholder="João Silva&#10;Maria Santos&#10;Pedro Costa"
+              class="form-textarea"
+            ></textarea>
+            <small class="form-hint">Separa cada autor numa linha diferente</small>
+          </div>
+
+          <div class="form-group">
+            <label for="summary">Resumo</label>
+            <textarea 
+              id="summary"
+              v-model="form.summary" 
+              rows="5" 
+              placeholder="Escreve um resumo da publicação..."
+              class="form-textarea"
+            ></textarea>
+            <small class="form-hint">Podes editar o resumo gerado automaticamente por IA mais tarde</small>
+          </div>
         </div>
-        
-        <div style="margin: 15px 0;">
-          <label>Autores (um por linha):</label>
-          <textarea v-model="authorsText" rows="3" placeholder="Autor 1&#10;Autor 2" style="width: 100%; padding: 5px;"></textarea>
+
+        <div class="form-section">
+          <h2>📎 Ficheiro (Opcional)</h2>
+          <div class="form-group">
+            <label for="file">Ficheiro PDF ou ZIP</label>
+            <div class="file-upload-area" :class="{ 'has-file': fileInput?.files?.length > 0 }">
+              <input 
+                id="file"
+                type="file" 
+                ref="fileInput" 
+                accept=".pdf,.zip" 
+                @change="handleFileChange"
+                class="file-input"
+              />
+              <div class="file-upload-content">
+                <span v-if="!fileInput?.files?.length" class="file-placeholder">
+                  📄 Clique para selecionar ou arraste um ficheiro aqui
+                </span>
+                <span v-else class="file-selected">
+                  ✅ {{ fileInput.files[0].name }} ({{ formatFileSize(fileInput.files[0].size) }})
+                </span>
+              </div>
+            </div>
+            <small class="form-hint">Podes criar a publicação sem ficheiro e adicioná-lo depois</small>
+          </div>
         </div>
-        
-        <div style="margin: 15px 0;">
-          <label>Resumo:</label>
-          <textarea v-model="form.summary" rows="5" style="width: 100%; padding: 5px;"></textarea>
+
+        <div class="form-section">
+          <h2>🔒 Configurações</h2>
+          
+          <div class="form-group">
+            <label for="visibility">Visibilidade</label>
+            <select id="visibility" v-model="form.visibility" class="form-select">
+              <option value="public">🌐 Pública - Visível para todos</option>
+              <option value="internal">🏢 Interna - Apenas membros do Centro</option>
+              <option value="hidden">🔒 Oculta - Apenas para ti</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Tags</label>
+            <div class="tags-input">
+              <div v-if="availableTags.length === 0" class="tags-loading">A carregar tags...</div>
+              <div v-else class="tags-list">
+                <label 
+                  v-for="tag in availableTags" 
+                  :key="tag.id" 
+                  class="tag-checkbox"
+                >
+                  <input 
+                    type="checkbox" 
+                    :value="tag.id" 
+                    v-model="selectedTags"
+                  />
+                  <span class="tag-label">{{ tag.name }}</span>
+                </label>
+              </div>
+            </div>
+            <small class="form-hint">Seleciona as tags relevantes para esta publicação</small>
+          </div>
         </div>
-        
-        <div style="margin: 15px 0;">
-          <label>Visibilidade:</label>
-          <select v-model="form.visibility" style="width: 100%; padding: 5px;">
-            <option value="public">Pública</option>
-            <option value="internal">Interna</option>
-            <option value="hidden">Oculta</option>
-          </select>
+
+        <div class="form-actions">
+          <button type="submit" :disabled="submitting" class="btn btn-primary btn-large">
+            {{ submitting ? 'A criar...' : '✨ Criar Publicação' }}
+          </button>
+          <nuxt-link to="/" class="btn btn-secondary">Cancelar</nuxt-link>
         </div>
-        
-        <div style="margin: 15px 0;">
-          <label>Ficheiro (opcional - PDF ou ZIP):</label>
-          <input type="file" ref="fileInput" accept=".pdf,.zip" />
-        </div>
-        
-        <button type="submit" :disabled="submitting" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer;">
-          Criar Publicação
-        </button>
-        <nuxt-link to="/publications" style="margin-left: 10px; padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 3px; display: inline-block;">
-          Cancelar
-        </nuxt-link>
       </form>
     </div>
   </div>
@@ -70,12 +161,39 @@ const success = ref(false)
 const publicationId = ref(null)
 
 const authorsText = ref('')
+const selectedTags = ref([])
+const availableTags = ref([])
+
 const form = ref({
   title: '',
   scientificArea: '',
   summary: '',
   visibility: 'internal'
 })
+
+async function loadTags() {
+  if (!token.value) return
+  
+  try {
+    availableTags.value = await $fetch(`${api}/tags`, {
+      headers: { 'Authorization': `Bearer ${token.value}` }
+    })
+  } catch (e) {
+    console.error('Erro ao carregar tags:', e)
+  }
+}
+
+function handleFileChange() {
+  // File change handled by ref
+}
+
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
+}
 
 async function createPublication() {
   if (!form.value.title.trim()) {
@@ -87,12 +205,30 @@ async function createPublication() {
   success.value = false
 
   try {
+    const authors = authorsText.value.split('\n')
+      .map(a => a.trim())
+      .filter(a => a.length > 0)
+
+    const publicationData = {
+      title: form.value.title,
+      scientificArea: form.value.scientificArea,
+      authors: authors,
+      summary: form.value.summary,
+      visibility: form.value.visibility,
+      tags: selectedTags.value.map(tagId => {
+        const tag = availableTags.value.find(t => t.id === tagId)
+        return tag ? { id: tag.id, name: tag.name } : null
+      }).filter(t => t !== null)
+    }
+
+    let response
+
     // Se houver ficheiro, usar upload; senão, criar sem ficheiro
     if (fileInput.value && fileInput.value.files && fileInput.value.files.length > 0) {
       const formData = new FormData()
       formData.append('file', fileInput.value.files[0])
 
-      const response = await $fetch(`${api}/publications/upload`, {
+      response = await $fetch(`${api}/publications/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token.value}`
@@ -102,41 +238,41 @@ async function createPublication() {
 
       publicationId.value = response.id
       
-      // Atualizar com os dados do formulário (se diferentes do nome do ficheiro)
-      if (form.value.title !== response.title || form.value.scientificArea || form.value.summary || form.value.visibility !== 'internal') {
-        await $fetch(`${api}/publications/${response.id}`, {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${token.value}`,
-            'Content-Type': 'application/json'
-          },
-          body: {
-            title: form.value.title,
-            scientificArea: form.value.scientificArea,
-            summary: form.value.summary,
-            visibility: form.value.visibility
-          }
-        })
-      }
-    } else {
-      // Criar sem ficheiro
-      const authors = authorsText.value.split('\n')
-        .map(a => a.trim())
-        .filter(a => a.length > 0)
-
-      const response = await $fetch(`${api}/publications`, {
-        method: 'POST',
+      // Atualizar com os dados do formulário
+      await $fetch(`${api}/publications/${response.id}`, {
+        method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token.value}`,
           'Content-Type': 'application/json'
         },
         body: {
-          title: form.value.title,
-          scientificArea: form.value.scientificArea,
-          authors: authors,
-          summary: form.value.summary,
-          visibility: form.value.visibility
+          title: publicationData.title,
+          scientificArea: publicationData.scientificArea,
+          summary: publicationData.summary,
+          visibility: publicationData.visibility
         }
+      })
+
+      // Associar tags
+      for (const tag of publicationData.tags) {
+        try {
+          await $fetch(`${api}/publications/${response.id}/tags/${tag.id}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token.value}` }
+          })
+        } catch (e) {
+          console.error('Erro ao associar tag:', e)
+        }
+      }
+    } else {
+      // Criar sem ficheiro
+      response = await $fetch(`${api}/publications`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token.value}`,
+          'Content-Type': 'application/json'
+        },
+        body: publicationData
       })
 
       publicationId.value = response.id
@@ -154,7 +290,231 @@ async function createPublication() {
 onMounted(() => {
   if (!token.value) {
     router.push('/auth/login')
+  } else {
+    loadTags()
   }
 })
 </script>
 
+<style scoped>
+.create-publication {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.page-header h1 {
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.page-header p {
+  color: #666;
+}
+
+.loading-state, .success-state {
+  text-align: center;
+  padding: 3rem;
+}
+
+.success-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.success-card h2 {
+  color: #28a745;
+  margin-bottom: 1rem;
+}
+
+.success-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.form-container {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.form-section {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #eee;
+}
+
+.form-section:last-of-type {
+  border-bottom: none;
+}
+
+.form-section h2 {
+  color: #667eea;
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-input, .form-textarea, .form-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-hint {
+  display: block;
+  margin-top: 0.25rem;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.file-upload-area {
+  border: 2px dashed #ddd;
+  border-radius: 4px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.file-upload-area:hover {
+  border-color: #667eea;
+  background: #f8f9ff;
+}
+
+.file-upload-area.has-file {
+  border-color: #28a745;
+  background: #f0fff4;
+}
+
+.file-input {
+  display: none;
+}
+
+.file-placeholder, .file-selected {
+  display: block;
+  color: #666;
+}
+
+.file-selected {
+  color: #28a745;
+  font-weight: 500;
+}
+
+.tags-input {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 1rem;
+  min-height: 100px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.tag-checkbox {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.tag-checkbox input {
+  margin-right: 0.5rem;
+}
+
+.tag-label {
+  padding: 0.25rem 0.75rem;
+  background: #f0f0f0;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.tag-checkbox input:checked + .tag-label {
+  background: #667eea;
+  color: white;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #eee;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.btn-primary {
+  background: #667eea;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #5568d3;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
+}
+
+.btn-large {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+}
+</style>
