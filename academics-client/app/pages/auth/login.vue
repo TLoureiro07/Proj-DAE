@@ -26,6 +26,7 @@
 </template>
 
 <script setup>
+import { storeToRefs } from 'pinia'
 import { useAuthStore } from "~/stores/auth-store.js";
 const authStore = useAuthStore()
 const { token, user } = storeToRefs(authStore)
