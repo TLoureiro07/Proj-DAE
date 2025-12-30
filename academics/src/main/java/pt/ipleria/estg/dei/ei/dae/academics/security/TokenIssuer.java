@@ -20,8 +20,8 @@ public class TokenIssuer {
 
     public static String issue(String username, String role) {
 
-        var expiryPeriod = LocalDateTime.now().plusMinutes(EXPIRY_MINS);
-        var expirationDateTime = Date.from(
+        LocalDateTime expiryPeriod = LocalDateTime.now().plusMinutes(EXPIRY_MINS);
+        Date expirationDateTime = Date.from(
                 expiryPeriod.atZone(ZoneId.systemDefault()).toInstant()
         );
 

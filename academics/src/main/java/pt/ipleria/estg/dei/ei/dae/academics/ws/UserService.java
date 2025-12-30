@@ -139,13 +139,15 @@ public class UserService {
 
         List<Publication> publications = publicationBean.findByOwner(username);
         List<Map<String, Object>> result = publications.stream()
-            .map(p -> Map.of(
-                "id", p.getId(),
-                "title", p.getTitle() != null ? p.getTitle() : "",
-                "visibility", p.getVisibility() != null ? p.getVisibility() : "",
-                "uploadDate", p.getUploadDate() != null ? p.getUploadDate().toString() : "",
-                "lastEdited", p.getLastEdited() != null ? p.getLastEdited().toString() : ""
-            ))
+            .map(p -> {
+                Map<String, Object> map = new java.util.HashMap<>();
+                map.put("id", p.getId());
+                map.put("title", p.getTitle() != null ? p.getTitle() : "");
+                map.put("visibility", p.getVisibility() != null ? p.getVisibility() : "");
+                map.put("uploadDate", p.getUploadDate() != null ? p.getUploadDate().toString() : "");
+                map.put("lastEdited", p.getLastEdited() != null ? p.getLastEdited().toString() : "");
+                return map;
+            })
             .collect(Collectors.toList());
 
         return Response.ok(result).build();

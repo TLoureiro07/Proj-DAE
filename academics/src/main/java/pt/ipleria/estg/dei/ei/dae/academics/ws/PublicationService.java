@@ -37,13 +37,13 @@ public class PublicationService {
     public Response uploadPublication(MultipartFormDataInput form, 
                                       @Context SecurityContext sc) {
         try {
-            var username = sc != null && sc.getUserPrincipal() != null ? 
+            String username = sc != null && sc.getUserPrincipal() != null ? 
                 sc.getUserPrincipal().getName() : null;
             if (username == null) {
                 return Response.status(Response.Status.UNAUTHORIZED).build();
             }
 
-            var parts = form.getFormDataMap().get("file");
+            java.util.List<InputPart> parts = form.getFormDataMap().get("file");
             if (parts == null || parts.isEmpty()) {
                 return Response.status(Response.Status.BAD_REQUEST)
                     .entity(Map.of("error", "Missing form field 'file'"))
@@ -156,13 +156,13 @@ public class PublicationService {
                                MultipartFormDataInput form, 
                                @Context SecurityContext sc) {
         try {
-            var username = sc != null && sc.getUserPrincipal() != null ? 
+            String username = sc != null && sc.getUserPrincipal() != null ? 
                 sc.getUserPrincipal().getName() : null;
             if (username == null) {
                 return Response.status(Response.Status.UNAUTHORIZED).build();
             }
 
-            var parts = form.getFormDataMap().get("file");
+            java.util.List<InputPart> parts = form.getFormDataMap().get("file");
             if (parts == null || parts.isEmpty()) {
                 return Response.status(Response.Status.BAD_REQUEST)
                     .entity(Map.of("error", "Missing form field 'file'"))
@@ -183,8 +183,8 @@ public class PublicationService {
     // helper to parse filename from Content-Disposition header
     private String extractFileName(InputPart part) {
         try {
-            var headers = part.getHeaders();
-            var contentDisp = headers.getFirst("Content-Disposition");
+            java.util.Map<String, java.util.List<String>> headers = part.getHeaders();
+            String contentDisp = headers.getFirst("Content-Disposition");
             if (contentDisp == null) return null;
             for (String cd : contentDisp.split(";")) {
                 cd = cd.trim();

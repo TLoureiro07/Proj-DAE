@@ -31,11 +31,11 @@ public class AuthorizationFilter implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext containerRequestContext) {
-        var methodInvoker = (ResourceMethodInvoker) containerRequestContext
+        ResourceMethodInvoker methodInvoker = (ResourceMethodInvoker) containerRequestContext
                 .getProperty("org.jboss.resteasy.core.ResourceMethodInvoker");
         Method method = methodInvoker.getMethod();
 
-        var resource = method.getDeclaringClass();
+        Class<?> resource = method.getDeclaringClass();
 
         // If authenticated, access granted for all roles
         if (resource.isAnnotationPresent(PermitAll.class)) {
@@ -48,7 +48,7 @@ public class AuthorizationFilter implements ContainerRequestFilter {
             if (method.isAnnotationPresent(RolesAllowed.class)) {
                 RolesAllowed rolesAnnotation = method
                         .getAnnotation(RolesAllowed.class);
-                var roles =
+                HashSet<String> roles =
                         new HashSet<>(Arrays.asList(rolesAnnotation.value()));
 
                 // Is user valid?
@@ -71,7 +71,7 @@ public class AuthorizationFilter implements ContainerRequestFilter {
             if (method.isAnnotationPresent(RolesAllowed.class)) {
                 RolesAllowed beanRolesAnnotation = method
                         .getAnnotation(RolesAllowed.class);
-                var roles =
+                HashSet<String> roles =
                         new HashSet<>(Arrays.asList(beanRolesAnnotation.value()));
 
                 // Is user valid?
@@ -96,7 +96,7 @@ public class AuthorizationFilter implements ContainerRequestFilter {
 
             RolesAllowed rolesAnnotation = resource
                     .getAnnotation(RolesAllowed.class);
-            var roles = new HashSet<>(Arrays.asList(rolesAnnotation.value()));
+            HashSet<String> roles = new HashSet<>(Arrays.asList(rolesAnnotation.value()));
 
             // Verify user access
             if (method.isAnnotationPresent(RolesAllowed.class)) {
@@ -124,7 +124,7 @@ public class AuthorizationFilter implements ContainerRequestFilter {
 
         // Verify user access
         if (method.isAnnotationPresent(RolesAllowed.class)) {
-            var roles =
+            HashSet<String> roles =
                     new HashSet<>(Arrays.asList(method.getAnnotation(RolesAllowed.class).value()));
 
             // Is user valid?

@@ -29,8 +29,8 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     private UriInfo uriInfo;
 
     @Override
-    public void filter(@org.jetbrains.annotations.NotNull ContainerRequestContext requestContext) {
-        var header = requestContext.getHeaderString(HttpHeaders.AUTHORIZATION);
+    public void filter(ContainerRequestContext requestContext) {
+        String header = requestContext.getHeaderString(HttpHeaders.AUTHORIZATION);
 
         if (header == null || !header.startsWith("Bearer ")) {
             throw new NotAuthorizedException("Authorization header must be provided");
@@ -40,7 +40,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
         String username = getUsername(token);
 
-        var user = userBean.find(username);
+        pt.ipleria.estg.dei.ei.dae.academics.entities.User user = userBean.find(username);
         if (user == null) {
             throw new NotAuthorizedException("Invalid user for token");
         }
@@ -69,7 +69,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     }
 
     private String getUsername(String token) {
-        var key = new SecretKeySpec(TokenIssuer.SECRET_KEY, TokenIssuer.ALGORITHM);
+        SecretKeySpec key = new SecretKeySpec(TokenIssuer.SECRET_KEY, TokenIssuer.ALGORITHM);
         try {
             return Jwts.parser()
                     .verifyWith(key)
