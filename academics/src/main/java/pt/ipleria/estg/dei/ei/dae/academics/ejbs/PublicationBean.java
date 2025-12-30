@@ -4,6 +4,7 @@ import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import org.hibernate.Hibernate;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Publication;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.PublicationHistory;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Tag;
@@ -44,6 +45,39 @@ public class PublicationBean {
 
     public Publication find(Long id) {
         return em.find(Publication.class, id);
+    }
+
+    // Método para encontrar publicação com relações lazy inicializadas (para DTOs)
+    public Publication findWithRelations(Long id) {
+        Publication p = em.find(Publication.class, id);
+        if (p != null) {
+            // Inicializar relações lazy antes de fechar a sessão
+            Hibernate.initialize(p.getTags());
+            Hibernate.initialize(p.getOwner());
+        }
+        return p;
+    }
+
+    // Método para encontrar publicações com relações lazy inicializadas
+    public List<Publication> findVisibleWithRelations(String search, String scientificArea, String tagName, String sortBy, String order) {
+        List<Publication> publications = findVisible(search, scientificArea, tagName, sortBy, order);
+        // Inicializar relações lazy para cada publicação
+        for (Publication p : publications) {
+            Hibernate.initialize(p.getTags());
+            Hibernate.initialize(p.getOwner());
+        }
+        return publications;
+    }
+
+    // Método para encontrar publicações por owner com relações lazy inicializadas
+    public List<Publication> findByOwnerWithRelations(String ownerUsername) {
+        List<Publication> publications = findByOwner(ownerUsername);
+        // Inicializar relações lazy para cada publicação
+        for (Publication p : publications) {
+            Hibernate.initialize(p.getTags());
+            Hibernate.initialize(p.getOwner());
+        }
+        return publications;
     }
 
     public Publication updateSummary(Long id, String summary, String editedByUsername) {

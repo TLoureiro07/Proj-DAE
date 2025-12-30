@@ -114,7 +114,11 @@
           <div class="form-group">
             <label>Tags</label>
             <div class="tags-input">
-              <div v-if="availableTags.length === 0" class="tags-loading">A carregar tags...</div>
+              <div v-if="loadingTags" class="tags-loading">A carregar tags...</div>
+              <div v-else-if="tagsError" class="tags-error">{{ tagsError }}</div>
+              <div v-else-if="availableTags.length === 0" class="tags-empty">
+                Nenhuma tag disponível. Podes criar a publicação sem tags.
+              </div>
               <div v-else class="tags-list">
                 <label 
                   v-for="tag in availableTags" 
@@ -130,7 +134,7 @@
                 </label>
               </div>
             </div>
-            <small class="form-hint">Seleciona as tags relevantes para esta publicação</small>
+            <small class="form-hint">Seleciona as tags relevantes para esta publicação (opcional)</small>
           </div>
         </div>
 
@@ -163,6 +167,8 @@ const publicationId = ref(null)
 const authorsText = ref('')
 const selectedTags = ref([])
 const availableTags = ref([])
+const loadingTags = ref(false)
+const tagsError = ref(null)
 
 const form = ref({
   title: '',
@@ -172,14 +178,30 @@ const form = ref({
 })
 
 async function loadTags() {
-  if (!token.value) return
+  if (!token.value) {
+    tagsError.value = 'Precisa de estar autenticado para carregar tags'
+    loadingTags.value = false
+    return
+  }
+  
+  loadingTags.value = true
+  tagsError.value = null
   
   try {
-    availableTags.value = await $fetch(`${api}/tags`, {
-      headers: { 'Authorization': `Bearer ${token.value}` }
+    const response = await $fetch(`${api}/tags`, {
+      method: 'GET',
+      headers: { 
+        'Authorization': `Bearer ${token.value}`,
+        'Accept': 'application/json'
+      }
     })
+    availableTags.value = response || []
   } catch (e) {
     console.error('Erro ao carregar tags:', e)
+    tagsError.value = 'Não foi possível carregar as tags. Podes criar a publicação sem tags e adicioná-las depois.'
+    availableTags.value = []
+  } finally {
+    loadingTags.value = false
   }
 }
 
@@ -211,14 +233,14 @@ async function createPublication() {
 
     const publicationData = {
       title: form.value.title,
-      scientificArea: form.value.scientificArea,
-      authors: authors,
-      summary: form.value.summary,
-      visibility: form.value.visibility,
-      tags: selectedTags.value.map(tagId => {
+      scientificArea: form.value.scientificArea || null,
+      authors: authors.length > 0 ? authors : null,
+      summary: form.value.summary || null,
+      visibility: form.value.visibility || 'internal',
+      tags: selectedTags.value.length > 0 ? selectedTags.value.map(tagId => {
         const tag = availableTags.value.find(t => t.id === tagId)
         return tag ? { id: tag.id, name: tag.name } : null
-      }).filter(t => t !== null)
+      }).filter(t => t !== null) : null
     }
 
     let response
@@ -280,8 +302,18 @@ async function createPublication() {
 
     success.value = true
   } catch (e) {
-    alert('Erro ao criar publicação: ' + (e.message || 'Erro desconhecido'))
-    console.error('Erro:', e)
+    let errorMsg = 'Erro ao criar publicação'
+    if (e.data?.error) {
+      errorMsg += ': ' + e.data.error
+    } else if (e.message) {
+      errorMsg += ': ' + e.message
+    } else if (e.statusMessage) {
+      errorMsg += ': ' + e.statusMessage
+    } else {
+      errorMsg += ': Erro desconhecido'
+    }
+    alert(errorMsg)
+    console.error('Erro completo:', e)
   } finally {
     submitting.value = false
   }
@@ -439,6 +471,19 @@ onMounted(() => {
   min-height: 100px;
   max-height: 200px;
   overflow-y: auto;
+}
+
+.tags-loading, .tags-error, .tags-empty {
+  padding: 1rem;
+  text-align: center;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.tags-error {
+  color: #dc3545;
+  background: #f8d7da;
+  border-radius: 4px;
 }
 
 .tags-list {
