@@ -27,39 +27,27 @@ public class ConfigBean {
     public void populateDB() {
         System.out.println("Hello Java EE!");
         
-        // Criar ou atualizar utilizadores iniciais para testes
+        // Criar utilizadores iniciais para testes
         // Password para todos: "pass"
-        User admin = userBean.find("admin");
-        if (admin == null) {
+        User admin = null;
+        if (userBean.find("admin") == null) {
             admin = userBean.create("admin", "pass", "Administrator", "admin@example.com", "Administrator");
             System.out.println("Created user: admin");
         } else {
-            // Garantir que está ativo e tem a password correta
-            userBean.setActive("admin", true);
-            userBean.changePassword("admin", "pass");
-            System.out.println("Updated user: admin");
+            admin = userBean.find("admin");
         }
         
-        User responsible = userBean.find("responsible");
-        if (responsible == null) {
+        if (userBean.find("responsible") == null) {
             userBean.create("responsible", "pass", "Responsible User", "responsible@example.com", "Responsible");
             System.out.println("Created user: responsible");
-        } else {
-            // Garantir que está ativo e tem a password correta
-            userBean.setActive("responsible", true);
-            userBean.changePassword("responsible", "pass");
-            System.out.println("Updated user: responsible");
         }
         
-        User collaborator = userBean.find("collaborator");
-        if (collaborator == null) {
+        User collaborator = null;
+        if (userBean.find("collaborator") == null) {
             collaborator = userBean.create("collaborator", "pass", "Collaborator User", "collaborator@example.com", "Collaborator");
             System.out.println("Created user: collaborator");
         } else {
-            // Garantir que está ativo e tem a password correta
-            userBean.setActive("collaborator", true);
-            userBean.changePassword("collaborator", "pass");
-            System.out.println("Updated user: collaborator");
+            collaborator = userBean.find("collaborator");
         }
 
         // Criar tags de teste
