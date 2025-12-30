@@ -3,6 +3,8 @@ package pt.ipleria.estg.dei.ei.dae.academics.entities;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -26,6 +28,9 @@ public class User {
     private String role;   // Administrator | Responsible | Collaborator
 
     private boolean active = true;
+
+    @ManyToMany(mappedBy = "subscribedUsers")
+    private List<Tag> subscribedTags = new ArrayList<>();
 
     public User() {}
 
@@ -56,4 +61,24 @@ public class User {
 
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
+
+    public List<Tag> getSubscribedTags() {
+        return subscribedTags;
+    }
+
+    public void setSubscribedTags(List<Tag> subscribedTags) {
+        this.subscribedTags = subscribedTags;
+    }
+
+    public void addSubscribedTag(Tag tag) {
+        if (!subscribedTags.contains(tag)) {
+            subscribedTags.add(tag);
+            tag.addSubscribedUser(this);
+        }
+    }
+
+    public void removeSubscribedTag(Tag tag) {
+        subscribedTags.remove(tag);
+        tag.removeSubscribedUser(this);
+    }
 }

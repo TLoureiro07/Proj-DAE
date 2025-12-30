@@ -54,6 +54,12 @@ public class Publication {
     @OneToMany(mappedBy = "publication", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PublicationHistory> history = new ArrayList<>();
 
+    @OneToMany(mappedBy = "publication", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "publication", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Rating> ratings = new ArrayList<>();
+
     // getters / setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -118,5 +124,45 @@ public class Publication {
 
     public void setHistory(List<PublicationHistory> history) {
         this.history = history;
+    }
+
+    public List<Comment> getComments() {
+        return comments;
+    }
+
+    public void setComments(List<Comment> comments) {
+        this.comments = comments;
+    }
+
+    public void addComment(Comment comment) {
+        if (!comments.contains(comment)) {
+            comments.add(comment);
+            comment.setPublication(this);
+        }
+    }
+
+    public void removeComment(Comment comment) {
+        comments.remove(comment);
+        comment.setPublication(null);
+    }
+
+    public List<Rating> getRatings() {
+        return ratings;
+    }
+
+    public void setRatings(List<Rating> ratings) {
+        this.ratings = ratings;
+    }
+
+    public void addRating(Rating rating) {
+        if (!ratings.contains(rating)) {
+            ratings.add(rating);
+            rating.setPublication(this);
+        }
+    }
+
+    public void removeRating(Rating rating) {
+        ratings.remove(rating);
+        rating.setPublication(null);
     }
 }

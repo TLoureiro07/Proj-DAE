@@ -6,7 +6,9 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Publication;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.PublicationHistory;
+import pt.ipleria.estg.dei.ei.dae.academics.entities.Tag;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.User;
+import pt.ipleria.estg.dei.ei.dae.academics.ejbs.TagBean;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,6 +28,9 @@ public class PublicationBean {
 
     @EJB
     private UserBean userBean;
+
+    @EJB
+    private TagBean tagBean;
 
     public Publication create(String ownerUsername, Publication p) {
         User owner = userBean.find(ownerUsername);
@@ -186,5 +191,25 @@ public class PublicationBean {
         return em.createQuery("SELECT h FROM PublicationHistory h WHERE h.publication = :pub ORDER BY h.editDate DESC", PublicationHistory.class)
                 .setParameter("pub", p)
                 .getResultList();
+    }
+
+    public Publication addTag(Long publicationId, Long tagId) {
+        Publication p = find(publicationId);
+        Tag tag = tagBean.find(tagId);
+        if (p != null && tag != null) {
+            p.addTag(tag);
+            em.merge(p);
+        }
+        return p;
+    }
+
+    public Publication removeTag(Long publicationId, Long tagId) {
+        Publication p = find(publicationId);
+        Tag tag = tagBean.find(tagId);
+        if (p != null && tag != null) {
+            p.removeTag(tag);
+            em.merge(p);
+        }
+        return p;
     }
 }

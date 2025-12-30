@@ -141,3 +141,104 @@ Content-Type: application/pdf
 
 < ./path/to/your/file.pdf
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### ============================================
+### TAGS
+### ============================================
+
+### Criar tag (apenas Responsible/Administrator)
+POST {{baseUrl}}/tags
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Machine Learning"
+}
+
+### Listar todas as tags
+GET {{baseUrl}}/tags
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Obter tag específica
+GET {{baseUrl}}/tags/1
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Remover tag (apenas Responsible/Administrator)
+DELETE {{baseUrl}}/tags/1
+Authorization: Bearer {{token}}
+
+### ============================================
+### COMENTÁRIOS E RATINGS
+### ============================================
+
+### Criar comentário em publicação
+POST {{baseUrl}}/publications/1/comments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "text": "Excelente publicação!"
+}
+
+### Listar comentários de uma publicação
+GET {{baseUrl}}/publications/1/comments
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Ocultar/mostrar comentário (apenas Responsible/Administrator)
+PATCH {{baseUrl}}/publications/1/comments/1/hidden
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "hidden": true
+}
+
+### Apagar comentário
+DELETE {{baseUrl}}/publications/1/comments/1
+Authorization: Bearer {{token}}
+
+### Criar ou atualizar rating
+POST {{baseUrl}}/publications/1/ratings
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "value": 5
+}
+
+### Listar ratings de uma publicação
+GET {{baseUrl}}/publications/1/ratings
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Apagar rating
+DELETE {{baseUrl}}/publications/1/ratings/1
+Authorization: Bearer {{token}}
+
+### Associar tag a publicação
+POST {{baseUrl}}/publications/1/tags/1
+Authorization: Bearer {{token}}
+
+### Desassociar tag de publicação (apenas Responsible/Administrator)
+DELETE {{baseUrl}}/publications/1/tags/1
+Authorization: Bearer {{token}}
+
+### ============================================
+### SUBSCRIÇÕES DE TAGS
+### ============================================
+
+### Listar tags subscritas por um utilizador
+GET {{baseUrl}}/users/admin/tags
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Subscrever tag
+POST {{baseUrl}}/users/admin/tags/1
+Authorization: Bearer {{token}}
+
+### Desinscrever tag
+DELETE {{baseUrl}}/users/admin/tags/1
+Authorization: Bearer {{token}}

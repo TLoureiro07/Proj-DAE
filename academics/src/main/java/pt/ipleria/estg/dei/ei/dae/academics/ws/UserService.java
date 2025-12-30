@@ -13,6 +13,8 @@ import pt.ipleria.estg.dei.ei.dae.academics.dtos.UserDTO;
 import pt.ipleria.estg.dei.ei.dae.academics.ejbs.UserBean;
 import pt.ipleria.estg.dei.ei.dae.academics.ejbs.PublicationBean;
 import pt.ipleria.estg.dei.ei.dae.academics.ejbs.UserActivityBean;
+import pt.ipleria.estg.dei.ei.dae.academics.dtos.TagDTO;
+import pt.ipleria.estg.dei.ei.dae.academics.entities.Tag;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.User;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Publication;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.UserActivity;
@@ -192,5 +194,72 @@ public class UserService {
             .collect(Collectors.toList());
 
         return Response.ok(result).build();
+    }
+
+    // Subscrições de tags
+    @GET
+    @Path("/{username}/tags")
+    @Authenticated
+    public Response getSubscribedTags(@PathParam("username") String username,
+                                      @Context SecurityContext sc) {
+        User user = userBean.find(username);
+        if (user == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        // Só pode ver as suas próprias subscrições, ou se for Administrator
+        String currentUser = sc != null && sc.getUserPrincipal() != null ?
+            sc.getUserPrincipal().getName() : null;
+        
+        if (currentUser == null || 
+            (!currentUser.equals(username) && !sc.isUserInRole("Administrator"))) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        }
+
+        List<Tag> tags = userBean.getSubscribedTags(username);
+        List<TagDTO> dtos = tags.stream()
+            .map(TagDTO::from)
+            .collect(Collectors.toList());
+
+        return Response.ok(dtos).build();
+    }
+
+    @POST
+    @Path("/{username}/tags/{tagId}")
+    @Authenticated
+    public Response subscribeToTag(@PathParam("username") String username,
+                                   @PathParam("tagId") Long tagId,
+                                   @Context SecurityContext sc) {
+        String currentUser = sc != null && sc.getUserPrincipal() != null ?
+            sc.getUserPrincipal().getName() : null;
+        
+        if (currentUser == null || !currentUser.equals(username)) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        }
+
+        userBean.subscribeToTag(username, tagId);
+        
+        // Registar atividade
+        userActivityBean.recordActivity(username, null, "TAG_SUBSCRIPTION", 
+            "Subscreveu tag ID: " + tagId);
+
+        return Response.ok(Map.of("message", "Subscrição realizada com sucesso")).build();
+    }
+
+    @DELETE
+    @Path("/{username}/tags/{tagId}")
+    @Authenticated
+    public Response unsubscribeFromTag(@PathParam("username") String username,
+                                       @PathParam("tagId") Long tagId,
+                                       @Context SecurityContext sc) {
+        String currentUser = sc != null && sc.getUserPrincipal() != null ?
+            sc.getUserPrincipal().getName() : null;
+        
+        if (currentUser == null || !currentUser.equals(username)) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        }
+
+        userBean.unsubscribeFromTag(username, tagId);
+        return Response.noContent().build();
     }
 }
