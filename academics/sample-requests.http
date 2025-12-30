@@ -1,0 +1,156 @@
+### Variáveis (podes alterar o token depois do login)
+@baseUrl = http://localhost:8080/academics/api
+@token = 
+
+### ============================================
+### AUTENTICAÇÃO
+### ============================================
+
+### EP02 - Login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "username": "admin",
+  "password": "pass"
+}
+
+### EP03 - Alterar palavra-passe (requer autenticação)
+PATCH {{baseUrl}}/auth/change-password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "old_password": "pass",
+  "new_password": "newpass",
+  "confirm_password": "newpass"
+}
+
+### ============================================
+### UTILIZADORES
+### ============================================
+
+### EP01 - Criar utilizador (apenas Administrator)
+POST {{baseUrl}}/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "username": "newuser",
+  "password": "pass",
+  "name": "New User",
+  "email": "newuser@example.com",
+  "role": "Collaborator"
+}
+
+### EP04 - Consultar perfil de utilizador
+GET {{baseUrl}}/users/admin
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### EP05 - Listar utilizadores (Administrator, Responsible)
+GET {{baseUrl}}/users
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Listar publicações de um utilizador
+GET {{baseUrl}}/users/admin/publications
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Histórico de atividades de um utilizador
+GET {{baseUrl}}/users/admin/activity
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Alterar role de utilizador (apenas Administrator)
+PATCH {{baseUrl}}/users/newuser/role
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "role": "Responsible"
+}
+
+### Ativar/Desativar utilizador (apenas Administrator)
+PATCH {{baseUrl}}/users/newuser/active
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "active": false
+}
+
+### ============================================
+### PUBLICAÇÕES
+### ============================================
+
+### EP01 - Upload de publicação (PDF ou ZIP) - cria publicação diretamente
+POST {{baseUrl}}/publications/upload
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="publication.pdf"
+Content-Type: application/pdf
+
+< ./path/to/your/file.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Criar publicação manualmente
+POST {{baseUrl}}/publications
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Nova Publicação",
+  "summary": "Resumo da publicação",
+  "visibility": "internal"
+}
+
+### Listar todas as publicações visíveis
+GET {{baseUrl}}/publications
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Obter publicação específica
+GET {{baseUrl}}/publications/1
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Atualizar publicação (summary, visibility)
+PATCH {{baseUrl}}/publications/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "summary": "Resumo atualizado",
+  "visibility": "hidden"
+}
+
+### Histórico de edições da publicação
+GET {{baseUrl}}/publications/1/history
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Atualizar ficheiro de publicação existente
+POST {{baseUrl}}/publications/1/file
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="updated.pdf"
+Content-Type: application/pdf
+
+< ./path/to/your/file.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### ============================================
+### TESTE SIMPLES (sem autenticação)
+### ============================================
+
+### Hello World (teste básico)
+GET {{baseUrl}}/hello-world
+Accept: text/plain
+
