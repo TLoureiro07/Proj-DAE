@@ -51,39 +51,56 @@ public class PublicationService {
     @POST
     @Authenticated
     public Response createPublication(PublicationDTO dto, @Context SecurityContext sc) {
-        String username = sc != null && sc.getUserPrincipal() != null ? 
-            sc.getUserPrincipal().getName() : null;
-        if (username == null) {
-            return Response.status(Response.Status.UNAUTHORIZED).build();
-        }
-
-        Publication p = new Publication();
-        p.setTitle(dto.title);
-        p.setAuthors(dto.authors);
-        p.setScientificArea(dto.scientificArea);
-        p.setVisibility(dto.visibility != null ? dto.visibility : "internal");
-        p.setSummary(dto.summary);
-
-        // Associar tags se fornecidas
-        if (dto.tags != null && !dto.tags.isEmpty()) {
-            for (TagDTO tagDto : dto.tags) {
-                Tag tag = tagBean.find(tagDto.id);
-                if (tag != null) {
-                    p.addTag(tag);
-                }
+        try {
+            String username = sc != null && sc.getUserPrincipal() != null ? 
+                sc.getUserPrincipal().getName() : null;
+            if (username == null) {
+                return Response.status(Response.Status.UNAUTHORIZED).build();
             }
-        }
 
-        Publication created = publicationBean.create(username, p);
-        if (created == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                .entity(Map.of("error", "Erro ao criar publicação"))
+            if (dto.title == null || dto.title.trim().isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", "Título é obrigatório"))
+                    .build();
+            }
+
+            Publication p = new Publication();
+            p.setTitle(dto.title.trim());
+            p.setAuthors(dto.authors != null ? dto.authors : new java.util.ArrayList<>());
+            p.setScientificArea(dto.scientificArea != null ? dto.scientificArea.trim() : null);
+            p.setVisibility(dto.visibility != null ? dto.visibility : "internal");
+            p.setSummary(dto.summary != null ? dto.summary.trim() : null);
+
+            Publication created = publicationBean.create(username, p);
+            if (created == null) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", "Erro ao criar publicação"))
+                    .build();
+            }
+
+            // Associar tags se fornecidas (depois de criar a publicação)
+            if (dto.tags != null && !dto.tags.isEmpty()) {
+                for (TagDTO tagDto : dto.tags) {
+                    if (tagDto != null && tagDto.id != null) {
+                        Tag tag = tagBean.find(tagDto.id);
+                        if (tag != null) {
+                            publicationBean.addTag(created.getId(), tag.getId());
+                        }
+                    }
+                }
+                // Recarregar para ter as tags
+                created = publicationBean.find(created.getId());
+            }
+
+            return Response.status(Response.Status.CREATED)
+                .entity(PublicationDTO.from(created))
+                .build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(Map.of("error", "Erro interno: " + e.getMessage()))
                 .build();
         }
-
-        return Response.status(Response.Status.CREATED)
-            .entity(PublicationDTO.from(created))
-            .build();
     }
 
     // EP01 - upload de publicação (PDF ou ZIP) - cria publicação diretamente (padrão Ficha 9)
