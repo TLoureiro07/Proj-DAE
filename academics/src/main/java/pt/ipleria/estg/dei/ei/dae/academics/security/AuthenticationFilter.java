@@ -30,13 +30,6 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext requestContext) {
-        // Verificar se o endpoint requer autenticação
-        // Se o path for /auth/login, permitir sem autenticação
-        String path = requestContext.getUriInfo().getPath();
-        if (path != null && (path.equals("auth/login") || path.endsWith("/auth/login"))) {
-            return; // Permitir acesso sem autenticação para login
-        }
-
         String header = requestContext.getHeaderString(HttpHeaders.AUTHORIZATION);
 
         if (header == null || !header.startsWith("Bearer ")) {

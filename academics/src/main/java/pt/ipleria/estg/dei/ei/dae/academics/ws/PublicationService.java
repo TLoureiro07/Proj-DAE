@@ -82,36 +82,20 @@ public class PublicationService {
             if (dto.tags != null && !dto.tags.isEmpty()) {
                 for (TagDTO tagDto : dto.tags) {
                     if (tagDto != null && tagDto.id != null) {
-                        try {
-                            Tag tag = tagBean.find(tagDto.id);
-                            if (tag != null) {
-                                publicationBean.addTag(created.getId(), tag.getId());
-                            }
-                        } catch (Exception tagEx) {
-                            System.err.println("Erro ao associar tag " + tagDto.id + ": " + tagEx.getMessage());
-                            // Continuar mesmo se uma tag falhar
+                        Tag tag = tagBean.find(tagDto.id);
+                        if (tag != null) {
+                            publicationBean.addTag(created.getId(), tag.getId());
                         }
                     }
                 }
-                // Recarregar para ter as tags
-                try {
-                    created = publicationBean.find(created.getId());
-                } catch (Exception e) {
-                    System.err.println("Erro ao recarregar publicação: " + e.getMessage());
-                    // Continuar com a publicação original
-                }
             }
 
-            // Forçar inicialização de relações lazy antes de converter para DTO
-            try {
-                if (created.getTags() != null) {
-                    created.getTags().size(); // Forçar carregamento
-                }
-                if (created.getOwner() != null) {
-                    created.getOwner().getUsername(); // Forçar carregamento
-                }
-            } catch (Exception e) {
-                System.err.println("Erro ao inicializar relações: " + e.getMessage());
+            // Recarregar com relações lazy inicializadas
+            created = publicationBean.findWithRelations(created.getId());
+            if (created == null) {
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(Map.of("error", "Erro ao recarregar publicação"))
+                    .build();
             }
 
             return Response.status(Response.Status.CREATED)
@@ -164,6 +148,14 @@ public class PublicationService {
                     .build();
             }
             
+            // Recarregar com relações lazy inicializadas
+            p = publicationBean.findWithRelations(p.getId());
+            if (p == null) {
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(Map.of("error", "Erro ao recarregar publicação"))
+                    .build();
+            }
+            
             return Response.status(Response.Status.CREATED)
                 .entity(PublicationDTO.from(p))
                 .build();
@@ -179,7 +171,7 @@ public class PublicationService {
     @Path("{id}")
     @Authenticated
     public Response getPublication(@PathParam("id") Long id) {
-        Publication p = publicationBean.find(id);
+        Publication p = publicationBean.findWithRelations(id);
         if (p == null) return Response.status(Response.Status.NOT_FOUND).build();
         PublicationDTO dto = PublicationDTO.from(p);
         return Response.ok(dto).build();
@@ -228,6 +220,14 @@ public class PublicationService {
                 .entity(Map.of("error", "Nenhum campo válido para atualizar")).build();
         }
 
+        // Recarregar com relações lazy inicializadas
+        p = publicationBean.findWithRelations(p.getId());
+        if (p == null) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(Map.of("error", "Erro ao recarregar publicação"))
+                .build();
+        }
+
         return Response.ok(PublicationDTO.from(p)).build();
     }
 
@@ -244,15 +244,15 @@ public class PublicationService {
     @GET
     @Authenticated
     public Response listVisible(@QueryParam("search") String search,
-                                 @QueryParam("scientificArea") String scientificArea,
-                                 @QueryParam("tag") String tagName,
-                                 @QueryParam("sortBy") String sortBy, 
-                                 @QueryParam("order") String order) {
+                                  @QueryParam("scientificArea") String scientificArea,
+                                  @QueryParam("tag") String tagName,
+                                  @QueryParam("sortBy") String sortBy, 
+                                  @QueryParam("order") String order) {
         try {
-            List<Publication> list = publicationBean.findVisible(search, scientificArea, tagName, sortBy, order);
-            List<PublicationDTO> out = list != null ? list.stream()
+            List<Publication> list = publicationBean.findVisibleWithRelations(search, scientificArea, tagName, sortBy, order);
+            List<PublicationDTO> out = list.stream()
                 .map(PublicationDTO::from)
-                .collect(Collectors.toList()) : List.of();
+                .collect(Collectors.toList());
             return Response.ok(out).build();
         } catch (Exception e) {
             e.printStackTrace();
@@ -290,6 +290,15 @@ public class PublicationService {
 
             Publication p = publicationBean.updateFile(id, inputStream, filename, username);
             if (p == null) return Response.status(Response.Status.NOT_FOUND).build();
+            
+            // Recarregar com relações lazy inicializadas
+            p = publicationBean.findWithRelations(p.getId());
+            if (p == null) {
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(Map.of("error", "Erro ao recarregar publicação"))
+                    .build();
+            }
+            
             return Response.ok(PublicationDTO.from(p)).build();
         } catch (Exception e) {
             return Response.serverError().entity(Map.of("error", e.getMessage())).build();
@@ -538,6 +547,15 @@ public class PublicationService {
         if (p == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
+        
+        // Recarregar com relações lazy inicializadas
+        p = publicationBean.findWithRelations(p.getId());
+        if (p == null) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(Map.of("error", "Erro ao recarregar publicação"))
+                .build();
+        }
+        
         return Response.ok(PublicationDTO.from(p)).build();
     }
 
@@ -552,6 +570,15 @@ public class PublicationService {
         if (p == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
+        
+        // Recarregar com relações lazy inicializadas
+        p = publicationBean.findWithRelations(p.getId());
+        if (p == null) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(Map.of("error", "Erro ao recarregar publicação"))
+                .build();
+        }
+        
         return Response.ok(PublicationDTO.from(p)).build();
     }
 }
