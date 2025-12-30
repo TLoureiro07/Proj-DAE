@@ -1,44 +1,36 @@
 <template>
-  <div>
-    <h1>Login Form</h1>
+  <h1>Login Form</h1>
+  <div>Username: <input v-model="loginFormData.username"></div>
+  <div>Password: <input v-model="loginFormData.password"></div>
+  <button @click="login">LOGIN</button>
+  <button @click="reset">RESET</button>
 
-    <div>Username: <input v-model="loginFormData.username" /></div>
-    <div>Password: <input v-model="loginFormData.password" type="password" /></div>
-    <button @click="login">LOGIN</button>
-    <button @click="reset">RESET</button>
+  <div v-if="token">
+    <div>Token: {{ token }}</div>
+  </div>
 
-    <div v-if="token">
-      <div>Token: {{ token }}</div>
-    </div>
+  <div v-if="user">
+    <div>User: <pre>{{ user }}</pre></div>
+  </div>
 
-    <div v-if="user">
-      <h2>User Info</h2>
-      <pre>{{ user }}</pre>
-    </div>
+  <div v-if="messages.length > 0">
+    <h2>Messages</h2>
 
-    <div v-if="messages.length > 0">
-      <h2>Messages</h2>
-      <div v-for="message in messages" :key="message.request">
-        <pre>{{ message }}</pre>
-      </div>
+    <div v-for="message in messages">
+      <pre>{{ message }}</pre>
     </div>
   </div>
 </template>
 
 <script setup>
-import { storeToRefs } from 'pinia'
-import { useAuthStore } from "~/stores/auth-store.js";
-const authStore = useAuthStore()
-const { token, user } = storeToRefs(authStore)
-
 const config = useRuntimeConfig()
-const api = config.public.apiBase
-
+const api = config.public.apiBase;
 const loginFormData = reactive({
   username: "",
   password: ""
 })
-
+const token = ref(null)
+const user = ref(null)
 const messages = ref([])
 
 function reset() {
@@ -64,14 +56,14 @@ async function login() {
           statusText: response.statusText,
           payload: response._data
         })
-        if (response.status === 200) {
+        if (response.status == 200) {
           token.value = response._data.token || response._data
           getUserInfo()
         }
       }
     })
   } catch (e) {
-    console.error('login request failed:', e)
+    console.error('login request failed: ', e)
   }
 }
 
@@ -92,13 +84,13 @@ async function getUserInfo() {
           statusText: response.statusText,
           payload: response._data
         })
-        if (response.status === 200) {
+        if (response.status == 200) {
           user.value = response._data
         }
       }
     })
   } catch (e) {
-    console.error('user info request failed:', e)
+    console.error('user info request failed: ', e)
   }
 }
 </script>

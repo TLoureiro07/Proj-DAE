@@ -9,6 +9,7 @@ import jakarta.ws.rs.core.Context;
 
 import pt.ipleria.estg.dei.ei.dae.academics.dtos.LoginDTO;
 import pt.ipleria.estg.dei.ei.dae.academics.dtos.ChangePasswordDTO;
+import pt.ipleria.estg.dei.ei.dae.academics.dtos.UserDTO;
 import pt.ipleria.estg.dei.ei.dae.academics.ejbs.UserBean;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.User;
 import pt.ipleria.estg.dei.ei.dae.academics.security.Authenticated;
@@ -23,6 +24,9 @@ public class AuthService {
 
     @EJB
     private UserBean userBean;
+
+    @Context
+    private SecurityContext securityContext;
 
     /**
      * EP02 — Login
@@ -89,5 +93,20 @@ public class AuthService {
         return Response.ok(
                 Map.of("message", "Palavra-passe alterada com sucesso")
         ).build();
+    }
+
+    /**
+     * GET /auth/user - Obter informação do utilizador autenticado (Ficha 8)
+     */
+    @GET
+    @Path("/user")
+    @Authenticated
+    public Response getAuthenticatedUser() {
+        String username = securityContext.getUserPrincipal().getName();
+        User user = userBean.find(username);
+        if (user == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        return Response.ok(UserDTO.from(user)).build();
     }
 }
