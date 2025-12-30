@@ -9,7 +9,7 @@
         <p><strong>Autor:</strong> {{ publication.owner }}</p>
         <p v-if="publication.summary"><strong>Resumo:</strong> {{ publication.summary }}</p>
         <p v-if="publication.ratingAvg !== null && publication.ratingAvg !== undefined">
-          <strong>Rating médio:</strong> {{ publication.ratingAvg.toFixed(1) }} ⭐ ({{ ratings.length }} avaliações)
+          <strong>Rating médio:</strong> {{ publication.ratingAvg.toFixed(1) }} estrelas ({{ ratings.length }} avaliações)
         </p>
         <p v-if="publication.tags && publication.tags.length > 0">
           <strong>Tags:</strong>
@@ -26,11 +26,11 @@
         <div>
           <label>Rating (1-5): </label>
           <select v-model="newRating.value">
-            <option value="1">1 ⭐</option>
-            <option value="2">2 ⭐⭐</option>
-            <option value="3">3 ⭐⭐⭐</option>
-            <option value="4">4 ⭐⭐⭐⭐</option>
-            <option value="5">5 ⭐⭐⭐⭐⭐</option>
+            <option value="1">1 estrela</option>
+            <option value="2">2 estrelas</option>
+            <option value="3">3 estrelas</option>
+            <option value="4">4 estrelas</option>
+            <option value="5">5 estrelas</option>
           </select>
           <button @click="submitRating" :disabled="submitting">Avaliar</button>
         </div>
@@ -70,7 +70,7 @@
         <div v-else>
           <div v-for="rating in ratings" :key="rating.id" style="border-top: 1px solid #eee; padding: 5px 0;">
             <strong>{{ rating.authorName }}</strong>: 
-            <span v-for="i in rating.value" :key="i">⭐</span>
+            <span v-for="i in rating.value" :key="i">*</span>
             <small>{{ formatDateTime(rating.ratingDate) }}</small>
           </div>
         </div>

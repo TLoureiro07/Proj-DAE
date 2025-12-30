@@ -1,11 +1,11 @@
 <template>
   <div class="subscriptions-page">
     <div class="page-header">
-      <h1>📌 Minhas Subscrições de Tags</h1>
+      <h1>Minhas Subscrições de Tags</h1>
       <p>Gerir as tags que subscreveste para receber notificações</p>
     </div>
 
-    <div v-if="loading">⏳ A carregar...</div>
+    <div v-if="loading">A carregar...</div>
     <div v-else-if="error" class="error-message">{{ error }}</div>
     <div v-else class="content-grid">
       <div class="section">

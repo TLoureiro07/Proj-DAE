@@ -21,7 +21,7 @@ const isCollaborator = computed(() => user.value?.role === 'Collaborator' || isR
     <header class="app-header">
       <div class="header-content">
         <h1 class="logo">
-          <nuxt-link to="/">📚 Plataforma de Gestão de Publicações Científicas</nuxt-link>
+          <nuxt-link to="/">Plataforma de Gestão de Publicações Científicas</nuxt-link>
         </h1>
         <nav class="main-nav">
           <template v-if="!token">
@@ -35,7 +35,7 @@ const isCollaborator = computed(() => user.value?.role === 'Collaborator' || isR
             <nuxt-link v-if="isAdmin" to="/users" class="nav-link">Utilizadores</nuxt-link>
             <nuxt-link v-if="token" to="/profile" class="nav-link">Perfil</nuxt-link>
             <div class="user-info">
-              <span class="user-name">👤 {{ user?.name || 'Utilizador' }}</span>
+              <span class="user-name">{{ user?.name || 'Utilizador' }}</span>
               <span class="user-role">({{ user?.role }})</span>
               <button @click="logout" class="logout-btn">Sair</button>
             </div>
@@ -48,9 +48,6 @@ const isCollaborator = computed(() => user.value?.role === 'Collaborator' || isR
       <slot />
     </main>
 
-    <footer class="app-footer">
-      <p>Centro de Investigação e Desenvolvimento XYZ © 2025</p>
-    </footer>
   </div>
 </template>
 

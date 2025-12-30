@@ -1,13 +1,13 @@
 <template>
   <div class="publications-page">
     <div class="page-header">
-      <h1>📚 Publicações Científicas</h1>
+      <h1>Publicações Científicas</h1>
       <p>Explora e pesquisa publicações do Centro de Investigação</p>
     </div>
     
     <!-- Formulário de Pesquisa e Filtros -->
     <div class="filters-card">
-      <h2>🔍 Pesquisar e Filtrar</h2>
+      <h2>Pesquisar e Filtrar</h2>
       <div class="filters-grid">
         <div class="filter-group">
           <label>Pesquisa (título/resumo)</label>
@@ -57,21 +57,21 @@
       </div>
       <div class="filters-actions">
         <button @click="applyFilters" :disabled="loading" class="btn btn-primary">
-          🔍 Aplicar Filtros
+          Aplicar Filtros
         </button>
         <button @click="clearFilters" class="btn btn-secondary">
-          🗑️ Limpar
+          Limpar
         </button>
       </div>
     </div>
 
     <div v-if="loading" class="loading-state">
-      <p>⏳ A carregar publicações...</p>
+      <p>A carregar publicações...</p>
     </div>
     <div v-else-if="error" class="error-message">{{ error }}</div>
     <div v-else>
       <div v-if="publications.length === 0" class="empty-state">
-        <p>📭 Não há publicações disponíveis com os critérios selecionados.</p>
+        <p>Não há publicações disponíveis com os critérios selecionados.</p>
         <button @click="clearFilters" class="btn btn-secondary">Limpar Filtros</button>
       </div>
       <div v-else>
@@ -96,10 +96,10 @@
               <p v-if="pub.summary" class="summary">{{ truncate(pub.summary, 200) }}</p>
               <div class="metrics">
                 <span v-if="pub.ratingAvg !== null && pub.ratingAvg !== undefined" class="metric">
-                  ⭐ {{ pub.ratingAvg.toFixed(1) }}
+                  Rating: {{ pub.ratingAvg.toFixed(1) }}
                 </span>
                 <span v-if="pub.tags && pub.tags.length > 0" class="metric">
-                  🏷️ {{ pub.tags.length }} tag(s)
+                  Tags: {{ pub.tags.length }}
                 </span>
               </div>
               <div v-if="pub.tags && pub.tags.length > 0" class="tags">
@@ -113,7 +113,7 @@
               </div>
             </div>
             <div class="card-footer">
-              <small class="date">📅 {{ formatDate(pub.uploadDate) }}</small>
+              <small class="date">{{ formatDate(pub.uploadDate) }}</small>
               <nuxt-link :to="`/publications/${pub.id}`" class="btn btn-small">Ver Detalhes →</nuxt-link>
             </div>
           </div>

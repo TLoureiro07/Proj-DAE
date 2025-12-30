@@ -1,15 +1,15 @@
 <template>
   <div class="my-publications">
     <div class="page-header">
-      <h1>📚 Minhas Publicações</h1>
+      <h1>Minhas Publicações</h1>
       <p>Gerir as publicações que criaste</p>
     </div>
 
-    <div v-if="loading">⏳ A carregar...</div>
+    <div v-if="loading">A carregar...</div>
     <div v-else-if="error" class="error-message">{{ error }}</div>
     <div v-else>
       <div v-if="publications.length === 0" class="empty-state">
-        <p>📭 Ainda não criaste nenhuma publicação.</p>
+        <p>Ainda não criaste nenhuma publicação.</p>
         <nuxt-link to="/publications/create" class="btn btn-primary">Criar Primeira Publicação</nuxt-link>
       </div>
       <div v-else>
@@ -30,7 +30,7 @@
               </p>
               <p v-if="pub.summary" class="summary">{{ truncate(pub.summary, 150) }}</p>
               <p v-if="pub.ratingAvg !== null && pub.ratingAvg !== undefined" class="info-item">
-                <strong>Rating:</strong> {{ pub.ratingAvg.toFixed(1) }} ⭐
+                <strong>Rating:</strong> {{ pub.ratingAvg.toFixed(1) }} estrelas
               </p>
               <p class="info-item">
                 <strong>Data:</strong> {{ formatDate(pub.uploadDate) }}

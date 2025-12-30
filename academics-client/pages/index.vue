@@ -18,23 +18,23 @@
       <div class="dashboard-grid">
         <!-- Ações Rápidas -->
         <div class="dashboard-card">
-          <h2>📝 Ações Rápidas</h2>
+          <h2>Ações Rápidas</h2>
           <div class="card-content">
             <nuxt-link to="/publications/create" class="action-btn">
-              ➕ Criar Nova Publicação
+              Criar Nova Publicação
             </nuxt-link>
             <nuxt-link to="/publications" class="action-btn">
-              🔍 Pesquisar Publicações
+              Pesquisar Publicações
             </nuxt-link>
             <nuxt-link v-if="isCollaborator" to="/tags/subscriptions" class="action-btn">
-              📌 Gerir Subscrições de Tags
+              Gerir Subscrições de Tags
             </nuxt-link>
           </div>
         </div>
 
         <!-- Minhas Publicações -->
         <div class="dashboard-card">
-          <h2>📚 Minhas Publicações</h2>
+          <h2>Minhas Publicações</h2>
           <div class="card-content">
             <div v-if="loadingPublications">A carregar...</div>
             <div v-else-if="myPublications.length === 0">
@@ -56,7 +56,7 @@
 
         <!-- Atividades Recentes -->
         <div class="dashboard-card">
-          <h2>📊 Atividades Recentes</h2>
+          <h2>Atividades Recentes</h2>
           <div class="card-content">
             <div v-if="loadingActivity">A carregar...</div>
             <div v-else-if="activities.length === 0">
@@ -79,20 +79,20 @@
 
         <!-- Gestão (Admin/Responsible) -->
         <div v-if="isResponsible" class="dashboard-card">
-          <h2>⚙️ Gestão</h2>
+          <h2>Gestão</h2>
           <div class="card-content">
             <nuxt-link v-if="isResponsible" to="/tags" class="action-btn">
-              🏷️ Gerir Tags
+              Gerir Tags
             </nuxt-link>
             <nuxt-link v-if="isAdmin" to="/users" class="action-btn">
-              👥 Gerir Utilizadores
+              Gerir Utilizadores
             </nuxt-link>
           </div>
         </div>
 
         <!-- Estatísticas -->
         <div class="dashboard-card">
-          <h2>📈 Estatísticas</h2>
+          <h2>Estatísticas</h2>
           <div class="card-content">
             <div class="stats-grid">
               <div class="stat-item">
@@ -204,13 +204,13 @@ function getVisibilityClass(visibility) {
 
 function getActivityIcon(type) {
   const icons = {
-    'UPLOAD': '📤',
-    'EDIT': '✏️',
-    'COMMENT': '💬',
-    'RATING': '⭐',
-    'TAG_SUBSCRIPTION': '📌'
+    'UPLOAD': 'UPLOAD',
+    'EDIT': 'EDIT',
+    'COMMENT': 'COMMENT',
+    'RATING': 'RATING',
+    'TAG_SUBSCRIPTION': 'TAG_SUB'
   }
-  return icons[type] || '📋'
+  return icons[type] || type
 }
 
 function formatDate(dateString) {

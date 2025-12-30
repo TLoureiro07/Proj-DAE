@@ -1,17 +1,17 @@
 <template>
   <div class="create-publication">
     <div class="page-header">
-      <h1>➕ Criar Nova Publicação</h1>
+      <h1>Criar Nova Publicação</h1>
       <p>Adiciona uma nova publicação científica à plataforma</p>
     </div>
 
     <div v-if="submitting" class="loading-state">
-      <p>⏳ A criar publicação...</p>
+      <p>A criar publicação...</p>
     </div>
 
     <div v-else-if="success" class="success-state">
       <div class="success-card">
-        <h2>✅ Publicação criada com sucesso!</h2>
+        <h2>Publicação criada com sucesso!</h2>
         <p>A tua publicação foi adicionada à plataforma.</p>
         <div class="success-actions">
           <nuxt-link :to="`/publications/${publicationId}`" class="btn btn-primary">Ver Publicação</nuxt-link>
@@ -23,7 +23,7 @@
     <div v-else class="form-container">
       <form @submit.prevent="createPublication" class="publication-form">
         <div class="form-section">
-          <h2>📄 Informações Básicas</h2>
+          <h2>Informações Básicas</h2>
           
           <div class="form-group">
             <label for="title">Título *</label>
@@ -74,7 +74,7 @@
         </div>
 
         <div class="form-section">
-          <h2>📎 Ficheiro (Opcional)</h2>
+          <h2>Ficheiro (Opcional)</h2>
           <div class="form-group">
             <label for="file">Ficheiro PDF ou ZIP</label>
             <div class="file-upload-area" :class="{ 'has-file': fileInput?.files?.length > 0 }">
@@ -88,10 +88,10 @@
               />
               <div class="file-upload-content">
                 <span v-if="!fileInput?.files?.length" class="file-placeholder">
-                  📄 Clique para selecionar ou arraste um ficheiro aqui
+                  Clique para selecionar ou arraste um ficheiro aqui
                 </span>
                 <span v-else class="file-selected">
-                  ✅ {{ fileInput.files[0].name }} ({{ formatFileSize(fileInput.files[0].size) }})
+                  {{ fileInput.files[0].name }} ({{ formatFileSize(fileInput.files[0].size) }})
                 </span>
               </div>
             </div>
@@ -100,14 +100,14 @@
         </div>
 
         <div class="form-section">
-          <h2>🔒 Configurações</h2>
+          <h2>Configurações</h2>
           
           <div class="form-group">
             <label for="visibility">Visibilidade</label>
             <select id="visibility" v-model="form.visibility" class="form-select">
-              <option value="public">🌐 Pública - Visível para todos</option>
-              <option value="internal">🏢 Interna - Apenas membros do Centro</option>
-              <option value="hidden">🔒 Oculta - Apenas para ti</option>
+              <option value="public">Pública - Visível para todos</option>
+              <option value="internal">Interna - Apenas membros do Centro</option>
+              <option value="hidden">Oculta - Apenas para ti</option>
             </select>
           </div>
 
@@ -136,7 +136,7 @@
 
         <div class="form-actions">
           <button type="submit" :disabled="submitting" class="btn btn-primary btn-large">
-            {{ submitting ? 'A criar...' : '✨ Criar Publicação' }}
+            {{ submitting ? 'A criar...' : 'Criar Publicação' }}
           </button>
           <nuxt-link to="/" class="btn btn-secondary">Cancelar</nuxt-link>
         </div>
