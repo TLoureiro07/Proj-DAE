@@ -45,7 +45,7 @@ async function login() {
           statusText: response.statusText,
           payload: response._data,
         })
-        if (response.status === 200) token.value = response._data
+        if (response.status === 200) token.value = response._data.token || response._data
       },
     })
   } catch (e) {

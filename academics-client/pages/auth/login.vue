@@ -65,7 +65,7 @@ async function login() {
           payload: response._data
         })
         if (response.status === 200) {
-          token.value = response._data
+          token.value = response._data.token || response._data
           getUserInfo()
         }
       }
