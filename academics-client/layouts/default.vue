@@ -15,7 +15,7 @@ function logout() {
     |
     <nuxt-link to="/upload-test">Upload</nuxt-link>
     |
-    <nuxt-link to="/documents">Publicações</nuxt-link>
+    <nuxt-link to="/publications">Publicações</nuxt-link>
 |
     <nuxt-link to="/students">Subscrições</nuxt-link>
     <template v-if="authStore.user">

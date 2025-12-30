@@ -46,6 +46,45 @@ public class PublicationService {
     @EJB
     private TagBean tagBean;
 
+    // Criar publicação sem ficheiro (opcional)
+    @POST
+    @Authenticated
+    public Response createPublication(PublicationDTO dto, @Context SecurityContext sc) {
+        String username = sc != null && sc.getUserPrincipal() != null ? 
+            sc.getUserPrincipal().getName() : null;
+        if (username == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+
+        Publication p = new Publication();
+        p.setTitle(dto.title);
+        p.setAuthors(dto.authors);
+        p.setScientificArea(dto.scientificArea);
+        p.setVisibility(dto.visibility != null ? dto.visibility : "internal");
+        p.setSummary(dto.summary);
+
+        // Associar tags se fornecidas
+        if (dto.tags != null && !dto.tags.isEmpty()) {
+            for (TagDTO tagDto : dto.tags) {
+                Tag tag = tagBean.find(tagDto.id);
+                if (tag != null) {
+                    p.addTag(tag);
+                }
+            }
+        }
+
+        Publication created = publicationBean.create(username, p);
+        if (created == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity(Map.of("error", "Erro ao criar publicação"))
+                .build();
+        }
+
+        return Response.status(Response.Status.CREATED)
+            .entity(PublicationDTO.from(created))
+            .build();
+    }
+
     // EP01 - upload de publicação (PDF ou ZIP) - cria publicação diretamente (padrão Ficha 9)
     @POST
     @Path("upload")
@@ -124,8 +163,18 @@ public class PublicationService {
 
         boolean updated = false;
 
+        if (body.containsKey("title") && body.get("title") != null) {
+            p = publicationBean.updateTitle(id, body.get("title").toString(), editor);
+            updated = true;
+        }
+
         if (body.containsKey("summary") && body.get("summary") != null) {
             p = publicationBean.updateSummary(id, body.get("summary").toString(), editor);
+            updated = true;
+        }
+
+        if (body.containsKey("scientificArea") && body.get("scientificArea") != null) {
+            p = publicationBean.updateScientificArea(id, body.get("scientificArea").toString(), editor);
             updated = true;
         }
 
@@ -151,13 +200,15 @@ public class PublicationService {
         return Response.ok(Map.of("publicationId", id, "history", history)).build();
     }
 
-    // EP07 - listar todas as publicações visíveis
+    // EP07 - listar todas as publicações visíveis (com pesquisa e filtros)
     @GET
     @Authenticated
-    public Response listVisible(@QueryParam("search") String search, 
+    public Response listVisible(@QueryParam("search") String search,
+                                 @QueryParam("scientificArea") String scientificArea,
+                                 @QueryParam("tag") String tagName,
                                  @QueryParam("sortBy") String sortBy, 
                                  @QueryParam("order") String order) {
-        List<Publication> list = publicationBean.findVisible(search, sortBy, order);
+        List<Publication> list = publicationBean.findVisible(search, scientificArea, tagName, sortBy, order);
         List<PublicationDTO> out = list.stream()
             .map(PublicationDTO::from)
             .collect(Collectors.toList());

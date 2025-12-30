@@ -70,6 +70,30 @@ public class PublicationBean {
         return p;
     }
 
+    public Publication updateTitle(Long id, String title, String editedByUsername) {
+        Publication p = find(id);
+        if (p == null) return null;
+        User editedBy = userBean.find(editedByUsername);
+        if (editedBy == null) return null;
+        p.setTitle(title);
+        p.setLastEdited(LocalDateTime.now());
+        em.merge(p);
+        recordHistory(p, editedBy, List.of("title"));
+        return p;
+    }
+
+    public Publication updateScientificArea(Long id, String scientificArea, String editedByUsername) {
+        Publication p = find(id);
+        if (p == null) return null;
+        User editedBy = userBean.find(editedByUsername);
+        if (editedBy == null) return null;
+        p.setScientificArea(scientificArea);
+        p.setLastEdited(LocalDateTime.now());
+        em.merge(p);
+        recordHistory(p, editedBy, List.of("scientificArea"));
+        return p;
+    }
+
     public List<Publication> findByOwner(String ownerUsername) {
         User owner = userBean.find(ownerUsername);
         if (owner == null) return List.of();
@@ -78,10 +102,52 @@ public class PublicationBean {
                 .getResultList();
     }
 
-    public List<Publication> findVisible(String search, String sortBy, String order) {
-        // mínimo: retorna todas com visibility != "hidden"
-        return em.createQuery("SELECT p FROM Publication p WHERE p.visibility <> 'hidden' ORDER BY p.uploadDate DESC", Publication.class)
-                .getResultList();
+    public List<Publication> findVisible(String search, String scientificArea, String tagName, String sortBy, String order) {
+        // Construir query dinâmica baseada nos filtros
+        StringBuilder queryBuilder = new StringBuilder("SELECT DISTINCT p FROM Publication p WHERE p.visibility <> 'hidden'");
+        
+        if (scientificArea != null && !scientificArea.trim().isEmpty()) {
+            queryBuilder.append(" AND LOWER(p.scientificArea) LIKE LOWER(:scientificArea)");
+        }
+        
+        if (tagName != null && !tagName.trim().isEmpty()) {
+            queryBuilder.append(" AND EXISTS (SELECT t FROM p.tags t WHERE LOWER(t.name) LIKE LOWER(:tagName))");
+        }
+        
+        if (search != null && !search.trim().isEmpty()) {
+            queryBuilder.append(" AND (LOWER(p.title) LIKE LOWER(:search) OR LOWER(p.summary) LIKE LOWER(:search))");
+        }
+        
+        // Ordenação
+        String orderBy = "p.uploadDate DESC";
+        if (sortBy != null && !sortBy.trim().isEmpty()) {
+            if ("rating".equalsIgnoreCase(sortBy)) {
+                orderBy = "p.ratingAvg " + ("desc".equalsIgnoreCase(order) ? "DESC" : "ASC");
+            } else if ("comments".equalsIgnoreCase(sortBy)) {
+                orderBy = "(SELECT COUNT(c) FROM Comment c WHERE c.publication = p) " + ("desc".equalsIgnoreCase(order) ? "DESC" : "ASC");
+            } else if ("ratings".equalsIgnoreCase(sortBy)) {
+                orderBy = "(SELECT COUNT(r) FROM Rating r WHERE r.publication = p) " + ("desc".equalsIgnoreCase(order) ? "DESC" : "ASC");
+            } else if ("date".equalsIgnoreCase(sortBy)) {
+                orderBy = "p.uploadDate " + ("desc".equalsIgnoreCase(order) ? "DESC" : "ASC");
+            }
+        }
+        queryBuilder.append(" ORDER BY ").append(orderBy);
+        
+        jakarta.persistence.TypedQuery<Publication> query = em.createQuery(queryBuilder.toString(), Publication.class);
+        
+        if (scientificArea != null && !scientificArea.trim().isEmpty()) {
+            query.setParameter("scientificArea", "%" + scientificArea.trim() + "%");
+        }
+        
+        if (tagName != null && !tagName.trim().isEmpty()) {
+            query.setParameter("tagName", "%" + tagName.trim() + "%");
+        }
+        
+        if (search != null && !search.trim().isEmpty()) {
+            query.setParameter("search", "%" + search.trim() + "%");
+        }
+        
+        return query.getResultList();
     }
 
     // Método antigo - mantido para compatibilidade, mas não recomendado
