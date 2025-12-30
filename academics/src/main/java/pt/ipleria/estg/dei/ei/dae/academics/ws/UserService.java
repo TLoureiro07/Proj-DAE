@@ -139,27 +139,20 @@ public class UserService {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
 
-        try {
-            List<Publication> publications = publicationBean.findByOwnerWithRelations(username);
-            List<Map<String, Object>> result = publications.stream()
-                .map(p -> {
-                    Map<String, Object> map = new java.util.HashMap<>();
-                    map.put("id", p.getId());
-                    map.put("title", p.getTitle() != null ? p.getTitle() : "");
-                    map.put("visibility", p.getVisibility() != null ? p.getVisibility() : "");
-                    map.put("uploadDate", p.getUploadDate() != null ? p.getUploadDate().toString() : "");
-                    map.put("lastEdited", p.getLastEdited() != null ? p.getLastEdited().toString() : "");
-                    return map;
-                })
-                .collect(Collectors.toList());
+        List<Publication> publications = publicationBean.findByOwner(username);
+        List<Map<String, Object>> result = publications.stream()
+            .map(p -> {
+                Map<String, Object> map = new java.util.HashMap<>();
+                map.put("id", p.getId());
+                map.put("title", p.getTitle() != null ? p.getTitle() : "");
+                map.put("visibility", p.getVisibility() != null ? p.getVisibility() : "");
+                map.put("uploadDate", p.getUploadDate() != null ? p.getUploadDate().toString() : "");
+                map.put("lastEdited", p.getLastEdited() != null ? p.getLastEdited().toString() : "");
+                return map;
+            })
+            .collect(Collectors.toList());
 
-            return Response.ok(result).build();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(Map.of("error", "Erro ao carregar publicações: " + e.getMessage()))
-                .build();
-        }
+        return Response.ok(result).build();
     }
 
     // EP09 — consultar histórico de atividade de um utilizador
@@ -223,19 +216,12 @@ public class UserService {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
 
-        try {
-            List<Tag> tags = userBean.getSubscribedTags(username);
-            List<TagDTO> dtos = tags.stream()
-                .map(TagDTO::from)
-                .collect(Collectors.toList());
+        List<Tag> tags = userBean.getSubscribedTags(username);
+        List<TagDTO> dtos = tags.stream()
+            .map(TagDTO::from)
+            .collect(Collectors.toList());
 
-            return Response.ok(dtos).build();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(Map.of("error", "Erro ao carregar subscrições: " + e.getMessage()))
-                .build();
-        }
+        return Response.ok(dtos).build();
     }
 
     @POST

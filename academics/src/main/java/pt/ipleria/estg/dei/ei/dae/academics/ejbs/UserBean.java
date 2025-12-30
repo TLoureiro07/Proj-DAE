@@ -4,7 +4,6 @@ import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import org.hibernate.Hibernate;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Tag;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.User;
 import pt.ipleria.estg.dei.ei.dae.academics.ejbs.TagBean;
@@ -94,8 +93,6 @@ public class UserBean {
     public List<Tag> getSubscribedTags(String username) {
         User user = find(username);
         if (user == null) return List.of();
-        // Inicializar relação lazy antes de retornar
-        Hibernate.initialize(user.getSubscribedTags());
         return user.getSubscribedTags();
     }
 }
