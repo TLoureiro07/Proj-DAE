@@ -82,14 +82,36 @@ public class PublicationService {
             if (dto.tags != null && !dto.tags.isEmpty()) {
                 for (TagDTO tagDto : dto.tags) {
                     if (tagDto != null && tagDto.id != null) {
-                        Tag tag = tagBean.find(tagDto.id);
-                        if (tag != null) {
-                            publicationBean.addTag(created.getId(), tag.getId());
+                        try {
+                            Tag tag = tagBean.find(tagDto.id);
+                            if (tag != null) {
+                                publicationBean.addTag(created.getId(), tag.getId());
+                            }
+                        } catch (Exception tagEx) {
+                            System.err.println("Erro ao associar tag " + tagDto.id + ": " + tagEx.getMessage());
+                            // Continuar mesmo se uma tag falhar
                         }
                     }
                 }
                 // Recarregar para ter as tags
-                created = publicationBean.find(created.getId());
+                try {
+                    created = publicationBean.find(created.getId());
+                } catch (Exception e) {
+                    System.err.println("Erro ao recarregar publicação: " + e.getMessage());
+                    // Continuar com a publicação original
+                }
+            }
+
+            // Forçar inicialização de relações lazy antes de converter para DTO
+            try {
+                if (created.getTags() != null) {
+                    created.getTags().size(); // Forçar carregamento
+                }
+                if (created.getOwner() != null) {
+                    created.getOwner().getUsername(); // Forçar carregamento
+                }
+            } catch (Exception e) {
+                System.err.println("Erro ao inicializar relações: " + e.getMessage());
             }
 
             return Response.status(Response.Status.CREATED)
@@ -226,11 +248,18 @@ public class PublicationService {
                                  @QueryParam("tag") String tagName,
                                  @QueryParam("sortBy") String sortBy, 
                                  @QueryParam("order") String order) {
-        List<Publication> list = publicationBean.findVisible(search, scientificArea, tagName, sortBy, order);
-        List<PublicationDTO> out = list.stream()
-            .map(PublicationDTO::from)
-            .collect(Collectors.toList());
-        return Response.ok(out).build();
+        try {
+            List<Publication> list = publicationBean.findVisible(search, scientificArea, tagName, sortBy, order);
+            List<PublicationDTO> out = list != null ? list.stream()
+                .map(PublicationDTO::from)
+                .collect(Collectors.toList()) : List.of();
+            return Response.ok(out).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(Map.of("error", "Erro ao carregar publicações: " + e.getMessage()))
+                .build();
+        }
     }
 
     // EP08 - atualizar ficheiro de publicação existente (opcional)

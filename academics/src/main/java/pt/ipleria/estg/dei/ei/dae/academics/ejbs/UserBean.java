@@ -93,6 +93,11 @@ public class UserBean {
     public List<Tag> getSubscribedTags(String username) {
         User user = find(username);
         if (user == null) return List.of();
-        return user.getSubscribedTags();
+        // Forçar carregamento das tags para evitar lazy loading exception
+        List<Tag> tags = user.getSubscribedTags();
+        if (tags != null) {
+            tags.size(); // Forçar inicialização
+        }
+        return tags != null ? tags : List.of();
     }
 }

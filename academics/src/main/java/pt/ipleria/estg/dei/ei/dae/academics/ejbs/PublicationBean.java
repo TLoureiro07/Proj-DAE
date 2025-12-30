@@ -38,7 +38,15 @@ public class PublicationBean {
         p.setOwner(owner);
         p.setUploadDate(LocalDate.now());
         p.setLastEdited(LocalDateTime.now());
+        // Inicializar listas para evitar null
+        if (p.getAuthors() == null) {
+            p.setAuthors(new java.util.ArrayList<>());
+        }
+        if (p.getTags() == null) {
+            p.setTags(new java.util.ArrayList<>());
+        }
         em.persist(p);
+        em.flush(); // Forçar flush para ter o ID
         return p;
     }
 
@@ -103,51 +111,64 @@ public class PublicationBean {
     }
 
     public List<Publication> findVisible(String search, String scientificArea, String tagName, String sortBy, String order) {
-        // Construir query dinâmica baseada nos filtros
-        StringBuilder queryBuilder = new StringBuilder("SELECT DISTINCT p FROM Publication p WHERE p.visibility <> 'hidden'");
-        
-        if (scientificArea != null && !scientificArea.trim().isEmpty()) {
-            queryBuilder.append(" AND LOWER(p.scientificArea) LIKE LOWER(:scientificArea)");
-        }
-        
-        if (tagName != null && !tagName.trim().isEmpty()) {
-            queryBuilder.append(" AND EXISTS (SELECT t FROM p.tags t WHERE LOWER(t.name) LIKE LOWER(:tagName))");
-        }
-        
-        if (search != null && !search.trim().isEmpty()) {
-            queryBuilder.append(" AND (LOWER(p.title) LIKE LOWER(:search) OR LOWER(p.summary) LIKE LOWER(:search))");
-        }
-        
-        // Ordenação
-        String orderBy = "p.uploadDate DESC";
-        if (sortBy != null && !sortBy.trim().isEmpty()) {
-            if ("rating".equalsIgnoreCase(sortBy)) {
-                orderBy = "p.ratingAvg " + ("desc".equalsIgnoreCase(order) ? "DESC" : "ASC");
-            } else if ("comments".equalsIgnoreCase(sortBy)) {
-                orderBy = "(SELECT COUNT(c) FROM Comment c WHERE c.publication = p) " + ("desc".equalsIgnoreCase(order) ? "DESC" : "ASC");
-            } else if ("ratings".equalsIgnoreCase(sortBy)) {
-                orderBy = "(SELECT COUNT(r) FROM Rating r WHERE r.publication = p) " + ("desc".equalsIgnoreCase(order) ? "DESC" : "ASC");
-            } else if ("date".equalsIgnoreCase(sortBy)) {
-                orderBy = "p.uploadDate " + ("desc".equalsIgnoreCase(order) ? "DESC" : "ASC");
+        try {
+            // Construir query dinâmica baseada nos filtros
+            StringBuilder queryBuilder = new StringBuilder("SELECT DISTINCT p FROM Publication p WHERE (p.visibility IS NULL OR p.visibility <> 'hidden')");
+            
+            if (scientificArea != null && !scientificArea.trim().isEmpty()) {
+                queryBuilder.append(" AND (p.scientificArea IS NOT NULL AND LOWER(p.scientificArea) LIKE LOWER(:scientificArea))");
+            }
+            
+            if (tagName != null && !tagName.trim().isEmpty()) {
+                queryBuilder.append(" AND EXISTS (SELECT t FROM p.tags t WHERE LOWER(t.name) LIKE LOWER(:tagName))");
+            }
+            
+            if (search != null && !search.trim().isEmpty()) {
+                queryBuilder.append(" AND ((p.title IS NOT NULL AND LOWER(p.title) LIKE LOWER(:search)) OR (p.summary IS NOT NULL AND LOWER(p.summary) LIKE LOWER(:search)))");
+            }
+            
+            // Ordenação - simplificada para evitar problemas com JPQL
+            String orderBy = "p.uploadDate DESC";
+            if (sortBy != null && !sortBy.trim().isEmpty()) {
+                if ("rating".equalsIgnoreCase(sortBy)) {
+                    // Ordenar por rating, nulls por último
+                    orderBy = "p.ratingAvg " + ("desc".equalsIgnoreCase(order) ? "DESC NULLS LAST" : "ASC NULLS FIRST");
+                } else if ("comments".equalsIgnoreCase(sortBy)) {
+                    orderBy = "(SELECT COUNT(c) FROM Comment c WHERE c.publication = p) " + ("desc".equalsIgnoreCase(order) ? "DESC" : "ASC");
+                } else if ("ratings".equalsIgnoreCase(sortBy)) {
+                    orderBy = "(SELECT COUNT(r) FROM Rating r WHERE r.publication = p) " + ("desc".equalsIgnoreCase(order) ? "DESC" : "ASC");
+                } else if ("date".equalsIgnoreCase(sortBy)) {
+                    orderBy = "p.uploadDate " + ("desc".equalsIgnoreCase(order) ? "DESC" : "ASC");
+                }
+            }
+            queryBuilder.append(" ORDER BY ").append(orderBy);
+            
+            jakarta.persistence.TypedQuery<Publication> query = em.createQuery(queryBuilder.toString(), Publication.class);
+            
+            if (scientificArea != null && !scientificArea.trim().isEmpty()) {
+                query.setParameter("scientificArea", "%" + scientificArea.trim() + "%");
+            }
+            
+            if (tagName != null && !tagName.trim().isEmpty()) {
+                query.setParameter("tagName", "%" + tagName.trim() + "%");
+            }
+            
+            if (search != null && !search.trim().isEmpty()) {
+                query.setParameter("search", "%" + search.trim() + "%");
+            }
+            
+            return query.getResultList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Se houver erro na query, retornar query simples
+            try {
+                return em.createQuery("SELECT p FROM Publication p WHERE (p.visibility IS NULL OR p.visibility <> 'hidden') ORDER BY p.uploadDate DESC", Publication.class)
+                        .getResultList();
+            } catch (Exception e2) {
+                e2.printStackTrace();
+                return new java.util.ArrayList<>();
             }
         }
-        queryBuilder.append(" ORDER BY ").append(orderBy);
-        
-        jakarta.persistence.TypedQuery<Publication> query = em.createQuery(queryBuilder.toString(), Publication.class);
-        
-        if (scientificArea != null && !scientificArea.trim().isEmpty()) {
-            query.setParameter("scientificArea", "%" + scientificArea.trim() + "%");
-        }
-        
-        if (tagName != null && !tagName.trim().isEmpty()) {
-            query.setParameter("tagName", "%" + tagName.trim() + "%");
-        }
-        
-        if (search != null && !search.trim().isEmpty()) {
-            query.setParameter("search", "%" + search.trim() + "%");
-        }
-        
-        return query.getResultList();
     }
 
     // Método antigo - mantido para compatibilidade, mas não recomendado

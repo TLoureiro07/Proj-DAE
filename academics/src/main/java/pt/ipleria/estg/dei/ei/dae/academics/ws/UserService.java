@@ -202,26 +202,33 @@ public class UserService {
     @Authenticated
     public Response getSubscribedTags(@PathParam("username") String username,
                                       @Context SecurityContext sc) {
-        User user = userBean.find(username);
-        if (user == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
+        try {
+            User user = userBean.find(username);
+            if (user == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            // Só pode ver as suas próprias subscrições, ou se for Administrator
+            String currentUser = sc != null && sc.getUserPrincipal() != null ?
+                sc.getUserPrincipal().getName() : null;
+            
+            if (currentUser == null || 
+                (!currentUser.equals(username) && !sc.isUserInRole("Administrator"))) {
+                return Response.status(Response.Status.FORBIDDEN).build();
+            }
+
+            List<Tag> tags = userBean.getSubscribedTags(username);
+            List<TagDTO> dtos = tags != null ? tags.stream()
+                .map(TagDTO::from)
+                .collect(Collectors.toList()) : List.of();
+
+            return Response.ok(dtos).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(Map.of("error", "Erro ao carregar subscrições: " + e.getMessage()))
+                .build();
         }
-
-        // Só pode ver as suas próprias subscrições, ou se for Administrator
-        String currentUser = sc != null && sc.getUserPrincipal() != null ?
-            sc.getUserPrincipal().getName() : null;
-        
-        if (currentUser == null || 
-            (!currentUser.equals(username) && !sc.isUserInRole("Administrator"))) {
-            return Response.status(Response.Status.FORBIDDEN).build();
-        }
-
-        List<Tag> tags = userBean.getSubscribedTags(username);
-        List<TagDTO> dtos = tags.stream()
-            .map(TagDTO::from)
-            .collect(Collectors.toList());
-
-        return Response.ok(dtos).build();
     }
 
     @POST

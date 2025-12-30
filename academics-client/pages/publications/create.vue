@@ -77,7 +77,13 @@
           <h2>Ficheiro (Opcional)</h2>
           <div class="form-group">
             <label for="file">Ficheiro PDF ou ZIP</label>
-            <div class="file-upload-area" :class="{ 'has-file': fileInput?.files?.length > 0 }">
+            <div 
+              class="file-upload-area" 
+              :class="{ 'has-file': fileInput?.files?.length > 0 }"
+              @click="() => fileInput?.click()"
+              @dragover.prevent
+              @drop.prevent="handleDrop"
+            >
               <input 
                 id="file"
                 type="file" 
@@ -205,8 +211,30 @@ async function loadTags() {
   }
 }
 
-function handleFileChange() {
-  // File change handled by ref
+function handleFileChange(event) {
+  // File change handled by ref - o Vue já atualiza fileInput.value.files automaticamente
+}
+
+function handleDrop(event) {
+  event.preventDefault()
+  const files = event.dataTransfer.files
+  if (files && files.length > 0) {
+    const file = files[0]
+    const fileName = file.name.toLowerCase()
+    if (fileName.endsWith('.pdf') || fileName.endsWith('.zip') || file.type === 'application/pdf' || file.type === 'application/zip') {
+      // Criar um novo FileList usando DataTransfer
+      const dataTransfer = new DataTransfer()
+      dataTransfer.items.add(file)
+      if (fileInput.value) {
+        fileInput.value.files = dataTransfer.files
+        // Disparar evento change para atualizar o Vue
+        const changeEvent = new Event('change', { bubbles: true })
+        fileInput.value.dispatchEvent(changeEvent)
+      }
+    } else {
+      alert('Por favor, seleciona um ficheiro PDF ou ZIP')
+    }
+  }
 }
 
 function formatFileSize(bytes) {
