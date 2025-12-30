@@ -87,27 +87,22 @@ Content-Type: application/json
 ### ============================================
 
 ### EP01 - Upload de publicação (PDF ou ZIP) - cria publicação diretamente
+### NOTA: Para testar este endpoint, precisas de um ficheiro real.
+### No IntelliJ IDEA, podes usar a funcionalidade de selecionar ficheiro.
+### Ou usa Postman/Thunder Client para fazer upload de um ficheiro.
 POST {{baseUrl}}/publications/upload
 Authorization: Bearer {{token}}
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
 
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="file"; filename="publication.pdf"
+Content-Disposition: form-data; name="file"; filename="test.pdf"
 Content-Type: application/pdf
 
-< ./path/to/your/file.pdf
+< C:\path\to\your\file.pdf
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
-### Criar publicação manualmente
-POST {{baseUrl}}/publications
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-  "title": "Nova Publicação",
-  "summary": "Resumo da publicação",
-  "visibility": "internal"
-}
+### NOTA: Não existe endpoint POST /publications (sem /upload)
+### As publicações são criadas APENAS via upload de ficheiro (POST /publications/upload)
 
 ### Listar todas as publicações visíveis
 GET {{baseUrl}}/publications
@@ -135,6 +130,7 @@ Authorization: Bearer {{token}}
 Accept: application/json
 
 ### Atualizar ficheiro de publicação existente
+### NOTA: Substitui o caminho do ficheiro pelo caminho real do teu ficheiro
 POST {{baseUrl}}/publications/1/file
 Authorization: Bearer {{token}}
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
@@ -143,7 +139,7 @@ Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0g
 Content-Disposition: form-data; name="file"; filename="updated.pdf"
 Content-Type: application/pdf
 
-< ./path/to/your/file.pdf
+< C:\path\to\your\file.pdf
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
 ### ============================================
