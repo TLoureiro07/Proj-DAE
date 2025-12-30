@@ -18,6 +18,7 @@ import pt.ipleria.estg.dei.ei.dae.academics.entities.Publication;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.PublicationHistory;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Comment;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Rating;
+import pt.ipleria.estg.dei.ei.dae.academics.entities.Tag;
 import pt.ipleria.estg.dei.ei.dae.academics.security.Authenticated;
 import jakarta.annotation.security.RolesAllowed;
 
