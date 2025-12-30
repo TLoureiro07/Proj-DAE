@@ -53,7 +53,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
             @Override
             public boolean isUserInRole(String role) {
-                return org.hibernate.Hibernate.getClass(user).getSimpleName().equals(role);
+                return user.getRole().equals(role);
             }
 
             @Override

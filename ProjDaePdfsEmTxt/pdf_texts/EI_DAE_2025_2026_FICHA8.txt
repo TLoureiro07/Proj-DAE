@@ -1,0 +1,440 @@
+ 
+ 1 / 12 
+ 
+DEI 
+ 
+Departamento 
+Engenharia 
+Informática 
+Desenvolvimento de Aplicações Empresariais – 2025-26-1S 
+Engenharia Informática – 3.º ano – Ramo SI 
+Worksheet 8 
+ 
+Topics: Client login and logout 
+Part I. Basic Authentication Front-end 
+1. In the last worksheet, we implemented the authentication technology using JAX-RS REST 
+web services and JWT tokens. Now, we need to create a front-end application that will take 
+advantage of this functionality.  
+We’ll start by creating a simple Vue.JS page that will allow us to test the token generation and 
+all the endpoints that require authentication.  
+In the pages directory of your Nuxt project, create a file named auth-test.vue with the 
+following content:  
+<template> 
+  <div> 
+    <h1>Login Form</h1> 
+    <div>Username: 
+      <input v-model="loginFormData.username"></div> 
+    <div>Password: 
+      <input v-model="loginFormData.password"></div> 
+    <button @click="login">LOGIN</button> 
+    <button @click="reset">RESET</button> 
+  </div> 
+ 
+  <div v-if="token"> 
+    <h2>API Request Form</h2> 
+    <div>Request: <code>GET {{ api }}</code>/ 
+      <input v-model="apiFormData.path"></div> 
+    <div>Token: {{ token }}</div> 
+    <button @click="sendRequest">SEND REQUEST</button> 
+  </div> 
+ 
+
+Desenvolvimento de Aplicações Empresariais  Worksheet 8 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 
+ 2 / 12 
+  <div v-if="messages.length > 0"> 
+    <h2>Messages</h2> 
+    <div v-for="message in messages"><pre>{{ message }}</pre></div> 
+  </div> 
+</template> 
+ 
+<script setup> 
+const config = useRuntimeConfig() 
+const api = config.public.apiBase; 
+ 
+const loginFormData = reactive({ 
+  username: null, 
+  password: null 
+}) 
+ 
+const apiFormData = reactive({ 
+  path: "students" 
+}) 
+ 
+const token = ref(null) 
+const messages = ref([]) 
+ 
+Desenvolvimento de Aplicações Empresariais  Worksheet 8 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 
+ 3 / 12 
+async function login() { 
+  reset() 
+  try { 
+    await $fetch(`${api}/auth/login`, { 
+      method: 'POST', 
+      headers: { 
+        'Content-Type': 'application/json', 
+        Accept: 'application/json', 
+      }, 
+      body: loginFormData, 
+      onResponse({ request, response, options }) { 
+        messages.value.push({ 
+          method: options.method, 
+          request: request, 
+          status: response.status, 
+          statusText: response.statusText, 
+          payload: response._data 
+        }) 
+        if (response.status == 200)  
+          token.value = response._data 
+      } 
+    }) 
+  } catch (e) { 
+    console.error('login request failed: ', e) 
+  } 
+} 
+ 
+function reset() { 
+  token.value = null 
+  messages.value = [] 
+} 
+ 
+Desenvolvimento de Aplicações Empresariais  Worksheet 8 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 
+ 4 / 12 
+async function sendRequest() { 
+  try { 
+    await $fetch(`${api}/${apiFormData.path}`, { 
+      method: 'GET', 
+      headers: { 
+        Accept: 'application/json', 
+        Authorization: `Bearer ${token.value}` 
+      }, 
+      onResponse({ request, response, options }) { 
+        messages.value.push({ 
+          method: options.method, 
+          request: request, 
+          status: response.status, 
+          statusText: response.statusText, 
+          payload: response._data 
+        }) 
+      } 
+    }) 
+  } catch (e) { 
+    console.error('api request failed: ', e) 
+  } 
+} 
+</script> 
+ 
+Notice this page contains two “forms”. The “Login Form” will send a request to the 
+api/auth/login endpoint to get a token. The “API Request Form” will  send a request to a 
+chosen endpoint using the current token for authentication.  
+ 
+2. Use this page to test each of the previously created GET endpoints that require authentication 
+with each of the available roles (Student, Teacher, Administrator).  
+ 
+EXTRA / HOMEWORK: 
+Improve the previous page by adding fields “method” and “body” to the “API Request Form,” 
+allowing more types of endpoints to be tested.  
+  
+Desenvolvimento de Aplicações Empresariais  Worksheet 8 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 
+ 5 / 12 
+Part II. User Information Endpoint 
+In the Jakarta EE project, we will add a new GET endpoint at /auth/user that will return the 
+user information corresponding to the JWT given.  
+3. Create a DTO for the information that will be returned  (“username”, “name”, “email” and 
+“role”). This time, we will include the Entity to DTO conversions in this class  (the from 
+methods).  
+public class UserDTO { 
+    private String username; 
+    private String name; 
+    private String email; 
+    private String role; 
+ 
+    public UserDTO() { 
+    } 
+ 
+    public UserDTO(String username, String name, String email, String role) { 
+        this.username = username; 
+        this.name = name; 
+        this.email = email; 
+        this.role = role; 
+    } 
+ 
+    public static UserDTO from(User user) { 
+        return new UserDTO( 
+                user.getUsername(), 
+                user.getName(), 
+                user.getEmail(), 
+                Hibernate.getClass(user).getSimpleName() 
+        ); 
+    } 
+ 
+    public static List<UserDTO> from(List<User> users) { 
+        return users.stream().map(UserDTO::from).collect(Collectors.toList()); 
+    } 
+ 
+    // TODO: getters and setters 
+} 
+ 
+4. Update AuthService with the new endpoint:  
+Desenvolvimento de Aplicações Empresariais  Worksheet 8 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 
+ 6 / 12 
+public class AuthService { 
+    // . . . 
+    @Context 
+    private SecurityContext securityContext; 
+    // . . . 
+    @GET 
+    @Authenticated 
+    @Path("/user") 
+    public Response getAuthenticatedUser() { 
+        var username = securityContext.getUserPrincipal().getName(); 
+        var user = userBean.find(username); 
+        return Response.ok(UserDTO.from(user)).build(); 
+    } 
+    // . . . 
+} 
+Note the use of SecurityContext.  
+ 
+5. Don't forget to test the newly created endpoint using a generic API client ( for example, using 
+an .http file in IntelliJ or Postman) 
+Part III. Typical Authentication Front-end 
+6. In the Nuxt project, u nder the pages directory, create a new directory called auth and inside 
+this directory create a new page called login.vue.  
+ 
+Note: the Nuxt command line interface (nuxt) provides a shortcut for this. Run the following 
+command in a terminal window on your Nuxt project root folder: 
+nuxt add page auth/login 
+ 
+If the nuxt command is not already available on your system, add it by executing the following 
+command in a terminal window on any folder:  
+npm i -g nuxt@latest 
+ 
+7. In the newly created /pages/auth/login.vue file add a login form, fetch the token, fetch the 
+user data, and show them. Try to do it using auth-test.vue as guidance.  
+The resulting code should be something like this:  
+Desenvolvimento de Aplicações Empresariais  Worksheet 8 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 
+ 7 / 12 
+<template> 
+  <h1>Login Form</h1> 
+  <div>Username: <input v-model="loginFormData.username"></div> 
+  <div>Password: <input v-model="loginFormData.password"></div> 
+  <button @click="login">LOGIN</button> 
+  <button @click="reset">RESET</button> 
+ 
+  <div v-if="token"> 
+    <div>Token: {{ token }}</div> 
+  </div> 
+ 
+  <div v-if="user"> 
+    <div>User: <pre>{{ user }}</pre></div> 
+  </div> 
+ 
+  <div v-if="messages.length > 0"> 
+    <h2>Messages</h2> 
+ 
+    <div v-for="message in messages"> 
+      <pre>{{ message }}</pre> 
+    </div> 
+  </div> 
+</template> 
+ 
+<script setup> 
+const config = useRuntimeConfig() 
+const api = config.public.apiBase; 
+const loginFormData = reactive({ 
+  username: "", 
+  password: "" 
+}) 
+const token = ref(null) 
+const user = ref(null) 
+const messages = ref([]) 
+ 
+function reset() { 
+  token.value = null 
+  messages.value = [] 
+} 
+ 
+Desenvolvimento de Aplicações Empresariais  Worksheet 8 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 
+ 8 / 12 
+async function login() { 
+  try { 
+    await $fetch(`${api}/auth/login`, { 
+      method: 'POST', 
+      headers: { 
+        'Content-Type': 'application/json', 
+        Accept: 'application/json' 
+      }, 
+      body: loginFormData, 
+      onResponse({ request, response, options }) { 
+        messages.value.push({ 
+          method: options.method, 
+          request: request, 
+          status: response.status, 
+          statusText: response.statusText, 
+          payload: response._data 
+        }) 
+        if (response.status == 200) { 
+          token.value = response._data 
+          getUserInfo() 
+        } 
+      } 
+    }) 
+  } catch (e) { 
+    console.error('login request failed: ', e) 
+  } 
+} 
+ 
+Desenvolvimento de Aplicações Empresariais  Worksheet 8 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 
+ 9 / 12 
+async function getUserInfo() { 
+  try { 
+    await $fetch(`${api}/auth/user`, { 
+      method: 'GET', 
+      headers: { 
+        'Content-Type': 'application/json', 
+        Accept: 'application/json', 
+        Authorization: `Bearer ${token.value}` 
+      }, 
+      onResponse({ request, response, options }) { 
+        messages.value.push({ 
+          method: options.method, 
+          request: request, 
+          status: response.status, 
+          statusText: response.statusText, 
+          payload: response._data 
+        }) 
+        if (response.status == 200) { 
+          user.value = response._data 
+        } 
+      } 
+    }) 
+  } catch (e) { 
+    console.error('user info request failed: ', e) 
+  } 
+} 
+</script> 
+ 
+We will now add and configure the Pinia module, so we can store information client-side and 
+share it between the pages.  
+ 
+8. Install pinia and pinia/nuxt modules by running the following  command in a terminal 
+window on your Nuxt project root folder: 
+npx nuxi@latest module add pinia 
+ 
+9. Make sure the Pinia module is added to the nuxt.config.ts file:  
+Desenvolvimento de Aplicações Empresariais  Worksheet 8 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 
+ 10 / 12 
+export default defineNuxtConfig({ 
+  // . . . 
+  modules: [ 
+    // . . . 
+    '@pinia/nuxt' 
+  ] 
+}) 
+ 
+10. In the Nuxt project app folder, create a folder named stores, and inside this folder create 
+a file named auth-store.js.  
+Note. The nuxt command does not provide a shortcut for this! 
+ 
+11. In the newly created app/stores/auth-store.js file, add the following code:  
+import {defineStore} from "pinia"; 
+ 
+export const useAuthStore = defineStore("authStore", () => { 
+    const token = ref(null) 
+    const user = ref(null) 
+ 
+    function logout() { 
+        token.value = null 
+        user.value = null 
+    } 
+ 
+    return { token, user, logout } 
+}) 
+ 
+ 
+12. Update the login page to make use of the newly created Pinia store:  
+import {useAuthStore} from "~/stores/auth-store.js" 
+// . . . 
+// const token = ref(null) 
+// const user = ref(null) 
+const authStore = useAuthStore() 
+const {token, user} = storeToRefs(authStore) 
+ 
+Note that token and user will still be reactive variables as before, but now they can be accessed 
+on any page using just this code.  
+ 
+ 
+Desenvolvimento de Aplicações Empresariais  Worksheet 8 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 
+ 11 / 12 
+13. In the Nuxt project app folder, create a file named app.vue to enable layout support: 
+<template> 
+  <NuxtLayout> 
+    <NuxtPage /> 
+  </NuxtLayout> 
+</template> 
+ 
+14. Create a default layout that will be shared across all pages by running the following command 
+in a terminal window on your Nuxt project root folder: 
+nuxt add layout default 
+ 
+15. Create a simple menu with a “logout” button by replacing the content of the newly created file 
+/layouts/default.vue with the following code:  
+<script setup> 
+import {useAuthStore} from "~/stores/auth-store.js"; 
+ 
+const router = useRouter() 
+const authStore = useAuthStore() 
+ 
+function logout() { 
+  authStore.logout() 
+  router.push('/') 
+} 
+</script> 
+ 
+<template> 
+  <nuxt-link to="/auth-test">Test</nuxt-link> 
+  | 
+  <nuxt-link to="/auth/login">Login</nuxt-link> 
+  | 
+  <nuxt-link to="/students">Students</nuxt-link> 
+  | 
+  <a href="#" @click.prevent="logout">Logout</a> 
+  <div> 
+    <slot /> 
+  </div> 
+</template> 
+ 
+Note that, for each page, <slot /> will be replaced with content of the page.  
+  
+Desenvolvimento de Aplicações Empresariais  Worksheet 8 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 
+ 12 / 12 
+EXTRA / HOMEWORK: 
+Update your Nuxt project so that:  
+- Logout button is only available when a user is logged in 
+- Menu shows the name of the logged user 
+- Login redirects to a page based on the user’s role 
+ 
+Bibliography 
+Java EE Tutorial 8 (all of it) 
+NUXT 

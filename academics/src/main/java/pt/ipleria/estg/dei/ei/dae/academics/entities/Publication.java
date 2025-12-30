@@ -3,6 +3,7 @@ package pt.ipleria.estg.dei.ei.dae.academics.entities;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -18,14 +19,21 @@ public class Publication {
 
     private String scientificArea;
 
-    @ElementCollection
-    private List<String> tags;
+    @ManyToMany
+    @JoinTable(
+            name = "publication_tag",
+            joinColumns = @JoinColumn(name = "publication_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private List<Tag> tags = new ArrayList<>();
 
     private String visibility; // "public", "internal", "hidden"
 
     private LocalDate uploadDate;
 
-    private String owner; // username of creator
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_username", nullable = false)
+    private User owner;
 
     @Lob
     private byte[] fileData;
@@ -43,6 +51,9 @@ public class Publication {
     @Version
     private int version;
 
+    @OneToMany(mappedBy = "publication", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PublicationHistory> history = new ArrayList<>();
+
     // getters / setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -56,8 +67,20 @@ public class Publication {
     public String getScientificArea() { return scientificArea; }
     public void setScientificArea(String scientificArea) { this.scientificArea = scientificArea; }
 
-    public List<String> getTags() { return tags; }
-    public void setTags(List<String> tags) { this.tags = tags; }
+    public List<Tag> getTags() { return tags; }
+    public void setTags(List<Tag> tags) { this.tags = tags; }
+
+    public void addTag(Tag tag) {
+        if (!tags.contains(tag)) {
+            tags.add(tag);
+            tag.addPublication(this);
+        }
+    }
+
+    public void removeTag(Tag tag) {
+        tags.remove(tag);
+        tag.removePublication(this);
+    }
 
     public String getVisibility() { return visibility; }
     public void setVisibility(String visibility) { this.visibility = visibility; }
@@ -65,8 +88,8 @@ public class Publication {
     public LocalDate getUploadDate() { return uploadDate; }
     public void setUploadDate(LocalDate uploadDate) { this.uploadDate = uploadDate; }
 
-    public String getOwner() { return owner; }
-    public void setOwner(String owner) { this.owner = owner; }
+    public User getOwner() { return owner; }
+    public void setOwner(User owner) { this.owner = owner; }
 
     public byte[] getFileData() { return fileData; }
     public void setFileData(byte[] fileData) { this.fileData = fileData; }
@@ -88,4 +111,12 @@ public class Publication {
 
     public int getVersion() { return version; }
     // no setter for version (managed by JPA)
+
+    public List<PublicationHistory> getHistory() {
+        return history;
+    }
+
+    public void setHistory(List<PublicationHistory> history) {
+        this.history = history;
+    }
 }

@@ -1,0 +1,289 @@
+   
+ 
+ 1 / 7 
+ 
+DEI 
+Departamento 
+Engenharia 
+Informática 
+Desenvolvimento de Aplicações Empresariais – 2025-26-1S 
+Engenharia Informática – 3.º ano – Ramo SI 
+Worksheet 2 
+ 
+Topics: Web Services; Presentation Logic Layer (PLL) 
+Requirements: Make sure you have the latest Node.js LTS  version. If not or unsure, download and 
+install/upgrade it. 
+In the previous worksheet we created an application that had a JPA Entity called Student and a stateless 
+EJB called StudentBean, to manage the Business Logic for the CRUD (Create, Read, Update, Delete) 
+operations related to students. And we started by developing the create(...) method that receives the 
+properties and saves a student in the database, thanks to an Entity Manager. Also, using the Singleton EJB 
+ConfigBean, we populated the database to see some results. 
+ 
+PART I: Creating a (Web) Service Layer 
+Today, we are going to add a Service Layer (Web Service Layer) that stays on top of the Business Logic 
+Layer (BLL) and serves as an Application Programming Interface (API) between our Jakarta EE (formerly, 
+Java EE) Enterprise Application’ Business Logic Layer (BLL) and the components of the Presentation Logic 
+Layer (PLL). 
+1. Your application was already created with an Application Java Class . It’s your  entry point for your 
+(Web) Service Layer. It’s called HelloApplication. Let’s rename it to AcademicsApplication to match 
+our project name (right-click on the HelloApplication.java file and do Refactor->Rename...). 
+package pt.ipleiria.estg.dei.ei.dae.academics; 
+ 
+import jakarta.ws.rs.ApplicationPath; 
+import jakarta.ws.rs.core.Application; 
+ 
+@ApplicationPath("/api") 
+public class AcademicsApplication extends Application {} 
+ 
+2. First, let’s c reate a Data Transfer Object (DTO) that serves as a contract between the Service Layer API 
+components and the (web) client applications : C reate a new Java class called StudentDTO in a package 
+dtos. This class must have the properties we want to make public to the “outside world”. StudentDTO is a 
+Desenvolvimento de Aplicações Empresariais    Worksheet 2 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 2 / 7 
+class with the same properties as the Student Entity, namely: username, password, name, email  (in fact, 
+you can just copy most of the code of the Student Entity). It is a simple Plain Old Java Object (POJO) 
+class, so make sure not to annotate it as an Entity. Make sure this class implements the Serializable 
+interface. Generate the default no parameters constructor, and a constructor that receives all the properties 
+values and the getters and setters for each property (you can/ should right-click on the code editor and 
+choose “Generate…” to automatically generate this kind of code , or as suggested earlier, copy and adapt 
+code from the Student Entity). 
+3. Add the following helper methods to the StudentDTO class, that will help convert from Student entities 
+and Lists of Student entities: 
+// Converts an entity Student to a DTO Student class 
+public static StudentDTO from(Student student) { 
+    return new StudentDTO( 
+        student.getUsername(), 
+        student.getPassword(), 
+        student.getName(), 
+        student.getEmail() 
+    ); 
+} 
+ 
+// converts an entire list of entities into a list of DTOs 
+public static List<StudentDTO> from(List<Student> students) { 
+    return students.stream().map(StudentDTO::from).collect(Collectors.toList()); 
+} 
+Make sure all the necessary classes are correctly imported in StudentDTO.  
+4. Now let’s tell our Jakarta EE application how we want to fetch all the students from the database. To do 
+so, we need to create a named query in the Student entity class. A named query means: associate an unique 
+name in the entire application, so that when we ask for a query with this name  (e.g.: “getAllCars”), the 
+application should resolve this name as the following query “ SELECT c FROM Cars c WHERE c.status = 
+‘active’ AND c.country = ‘pt -PT’ AND c.deletedAt IS NULL ORDER BY c.brand ”. Translating 
+this into code, it means you must add an annotation, called @NamedQuery in the Student Entity. Often in a 
+typical enterprise solution, an Entity needs to have many queries. Thus, we wrap the @NamedQuery 
+annotation in the @NamedQueries annotation. The result in the Student (entity) class should be this: 
+@Entity 
+@NamedQueries({ 
+    @NamedQuery( 
+        name = "getAllStudents", 
+        query = "SELECT s FROM Student s ORDER BY s.name" // JPQL 
+    ) 
+}) 
+public class Student implements Serializable { 
+    // here go properties, default constructor, getters and setters... 
+} 
+Desenvolvimento de Aplicações Empresariais    Worksheet 2 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 3 / 7 
+NOTE: JPQL (Java Persistence Query Language) is an object-oriented query language for the Java Persistence API 
+(JPA) specification. It looks like SQL, but has some differences that are important to pay attention. To learn and 
+explore more, use the official documentation: https://javaee.github.io/tutorial/persistence-querylanguage.html 
+5. Add the following method to the StudentBean EJB class: 
+public List<Student> findAll() { 
+    // remember, maps to: “SELECT s FROM Student s ORDER BY s.name” 
+    return entityManager.createNamedQuery("getAllStudents", Student.class).getResultList(); 
+} 
+This method will retrieve and return all the students using the previously created named query. 
+6. Let’s create a Web Service that will handle requests from client applications. Create a class called 
+StudentService in a package ws, and annotate it with the Path, Produces and Consumes Jakarta EE 
+annotations. Also inject a StudentBean EJB: 
+package pt.ipleiria.estg.dei.ei.dae.academics.ws; 
+ 
+import pt.ipleiria.estg.dei.ei.dae.academics.ejbs.StudentBean; 
+ 
+import jakarta.ejb.EJB; 
+import jakarta.ws.rs.Consumes; 
+import jakarta.ws.rs.Path; 
+import jakarta.ws.rs.Produces; 
+import jakarta.ws.rs.core.MediaType; 
+ 
+@Path("students") // relative url web path for this service 
+@Produces({MediaType.APPLICATION_JSON}) // injects header “Content-Type: application/json” 
+@Consumes({MediaType.APPLICATION_JSON}) // injects header “Accept: application/json” 
+public class StudentService { 
+    @EJB 
+    private StudentBean studentBean; 
+ 
+    @GET // means: to call this endpoint, we need to use the HTTP GET method 
+    @Path("/") // means: the relative url path is “/api/students/” 
+    public List<StudentDTO> getAllStudents() { 
+        return StudentDTO.from(studentBean.findAll()); 
+    } 
+} 
+Make sure to import all needed classes ( Path, Consumes, Produces and MediaType from the 
+jakarta.ws.rs package, EJB from the jakarta.ejb package – please double check that you imported the 
+correct classes). For this task, you should take advantage of IntelliJ IDEA. StudentService does not need a 
+constructor.  
+7.  Make sure your Docker Desktop is running, deploy your application (make deploy) and a ccess 
+http://localhost:8080/academics. You should get the result “Forbidden”. 
+8. Change the URL to http://localhost:8080/academics/api/students/. You should get all the 
+students you populated in your database, ordered by name. 
+NOTE: Your web service lives in the relative URL /api, just like defined in the AcademicsApplication 
+class, that extends an Application Web Service. The rest of the path refers to students calls in the 
+Desenvolvimento de Aplicações Empresariais    Worksheet 2 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 4 / 7 
+StudentService, because you told your StudentService that all its methods must live inside the URL 
+pattern /students relative path. Finally, we instructed the method to obtain all the students to be in the / 
+URL relative path, so that http://localhost:8080/academics/api/students retrieves all the students. 
+Feel free to change all the URL paths to understand better its way of working behind the scenes.  
+For instance, for method getAllStudents() of StudentService class, change the annotation 
+@Path("/") to @Path("/all") and re-deploy the application. Now, to get all the students, you should 
+enter URL: http://localhost:8080/academics/api/students/all. Don’t forget to revert this change, 
+because using the /all suffix in this context is not a good practice in API design.  
+ 
+PART II: Creating a Presentation Logic Layer application 
+9. Now let’s create an independent (client) application to co nsume the Service Layer API we ’ve just 
+developed. We will create a new project that represents our P resentation Logic Layer components , 
+according to the 3 -layer architectural pattern you are learning in theory classes. You will create another 
+independent application, so make sure you do not create it  inside your current  project root 
+directory. There should be 2 distinct projects, stored on separate directories. For convenience, they might 
+be stored on sibling directories (for example, if the previous application is stored in academics/backend, 
+this new one would be stored in academics/frontend).  
+10. To create the new project, go to the directory which will be the parent of this new project directory  and 
+hit the following command: 
+$ npx nuxi@latest init academics-client 
+ 
+When prompted, select npm as the package manager: 
+> Which package manager would you like to use?  
+npm 
+The dependencies will start downloading. After the installation is complete, you will be asked to initialize a 
+Git repository. If you know what Git is, you are free to choose, otherwise answer “No”:  
+> Initialize git repository?  
+No 
+When prompted for official modules, select “No”: 
+> Would you like to install any of the official modules?  
+No 
+11. Using the terminal, execute the following commands to enter the newly created directory (academics -
+client) and to start the Nuxt application in development mode: 
+$ cd academics-client 
+$ npm run dev 
+Desenvolvimento de Aplicações Empresariais    Worksheet 2 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 5 / 7 
+NOTE: if you get an error like Error: error:0308010C:digital envelope routines::unsupported, check 
+the solution here. 
+The application may ask you to help them by providing anonymous data usage. Feel free  to accept or reject. 
+The command launches the app in port 3000 and opens it in your default browser  (if not , point your 
+browser to http://localhost:3000). The application does hot -reload. Generally, when you change a file, 
+the application will automatically reload. However, on some occasions you might need to interrupt the 
+server (npm run dev) and manually relaunch.  
+12. Open the project in the with an IDE/Text Editor you feel more comfortable with. For instance, you can 
+open with: WebStorm, IntelliJ IDEA Ultimate, Visual Studio Code or Sublime Text. 
+NOTE: For better Vue/Nuxt integration using IntelliJ IDEA Ultimate or WebStorm, make sure you have 
+the following plugins installed:  NodeJS, Vue.js and Nuxt.js . To verify this, go to the IDE 
+settings/preferences, on the left panel, select “Plugins”. Verify if they’re already installed, and if not, s earch 
+for them in the marketplace and install them. 
+13. Replace the contents of the app.vue file with this code: 
+<template> 
+  <div v-if="error"> 
+    Error: {{ error.message }} 
+  </div> 
+  <div v-else> 
+    <h2>Students</h2> 
+    <div>{{ students }}</div> 
+    <button @click.prevent="refresh">Refresh Data</button> 
+  </div> 
+</template> 
+ 
+<script setup> 
+const { data: students, error, refresh }  
+    = await useFetch('http://localhost:8080/academics/api/students') 
+</script>  
+This is a just a “quick and dirty” client application that consumes the previously crated web service. Later, 
+we will improve this application. But for now, test it. If you still have the initial page on in your browser, it 
+should reload automatically. Notice if it shows any errors. A “<no response>” error might indicate that the 
+backend server is not running or it is refusing connection.  
+14. Stop the Nuxt server in the terminal (Ctrl + C). We are going to edit the Nuxt configuration file.  
+Desenvolvimento de Aplicações Empresariais    Worksheet 2 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 6 / 7 
+15. Open the nuxt.config.ts file (it is in the root of the academics-client project). Add the following code 
+inside defineNuxtConfig({ }):  
+  runtimeConfig: { 
+    public: { 
+      apiBase: 'http://localhost:8080/academics/api' 
+    } 
+  } 
+The URL in this configuration will be used just as default value. If you need to change apiBase you should 
+create a .env file and set a NUXT_PUBLIC_API_BASE environment variable.  
+16. Replace the entire <script> block in app.vue with this code:  
+<script setup> 
+const config = useRuntimeConfig(); 
+const api = config.public.apiBase; 
+const { data: students, error, refresh } = await useFetch(`${api}/students`) 
+</script> 
+ 
+17. Finally, we need to allow communication between two servers (CORS). If you do not know what CORS 
+is, please check the MDN web docs. To do that, we need to add a filter that intercepts the incoming requests 
+and allows the communications on the requested server ( our Jakarta EE enterprise application deployed in 
+Wildfly). Return to the Jakarta EE project and create a new file, under a package named “providers”, named 
+CorsFilter, and paste the following code: 
+package pt.ipleiria.estg.dei.ei.dae.academics.providers; 
+ 
+import jakarta.ws.rs.container.ContainerRequestContext; 
+import jakarta.ws.rs.container.ContainerResponseContext; 
+import jakarta.ws.rs.container.ContainerResponseFilter; 
+import jakarta.ws.rs.core.Response; 
+import jakarta.ws.rs.ext.Provider; 
+ 
+import java.io.IOException; 
+ 
+@Provider 
+public class CorsFilter implements ContainerResponseFilter { 
+    @Override 
+    public void filter(ContainerRequestContext requestContext,  
+                       ContainerResponseContext responseContext) throws IOException { 
+        responseContext.getHeaders().add("Access-Control-Allow-Origin", "*"); 
+        responseContext.getHeaders().add("Access-Control-Allow-Credentials", "true"); 
+        responseContext.getHeaders().add("Access-Control-Allow-Methods", "*"); 
+        responseContext.getHeaders().add("Access-Control-Allow-Headers","*"); 
+        if (requestContext.getMethod().equals("OPTIONS")) { 
+            responseContext.setStatus(Response.Status.ACCEPTED.getStatusCode()); 
+        } 
+    } 
+} 
+ 
+Desenvolvimento de Aplicações Empresariais    Worksheet 2 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 7 / 7 
+ 
+18. Re-deploy the Jakarta EE  academics management app and then re-start the Nuxt server ( npm run 
+dev). Point your browser to http://localhost:3000 and you should see the students list  (you may need 
+to wait a few minutes before the Wildfly container is ready to serve your Jakarta EE application). 
+ 
+Worksheet 2 Documentation: 
+We strongly recommend you read the basic documentation of the NUXT and other frameworks to better 
+understand the concepts skipped here, that are not the focus of this course. 
+About Vue and its ecosystem: 
+⚫ https://vuejs.org/ 
+⚫ https://nuxtjs.org/ 
+⚫ https://getbootstrap.com/ 
+or other CSS framework you prefer. 
+Important for your workgroup project: You have a curated list of great Vue JS-based projects you can 
+integrate in your project that will speed  up your frontend (Presentation Logic Layer) application 
+development. This list has some libraries you can use for the frontend , so that you spend less hours 
+developing the “beauty” of the website, focusing mainly on the robustness and quality of your Enterprise 
+Application as a whole. That is what, in the end, matters and is expected in an enterprise context. 
+About JPQL: 
+⚫ https://javaee.github.io/tutorial/persistence-querylanguage.html  
+About REST 
+⚫ https://developer.mozilla.org/en-US/docs/Glossary/REST 
+⚫ https://blog.mwaysolutions.com/2014/06/05/10-best-practices-for-better-restful-api/ 
+⚫ https://www.restapitutorial.com/ 
+⚫ https://restfulapi.net/ 
+⚫ https://restfulapi.net/resource-naming/ 
+About CORS 
+⚫ https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS 
+⚫ https://www.codecademy.com/articles/what-is-cors 

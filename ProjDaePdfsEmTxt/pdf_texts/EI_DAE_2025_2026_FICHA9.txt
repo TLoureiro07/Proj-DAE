@@ -1,0 +1,272 @@
+ 1 / 7 
+ 
+DEI 
+ 
+Departamento 
+Engenharia 
+Informática 
+Desenvolvimento de Aplicações Empresariais – 2025-26-1S 
+Engenharia Informática – 3.º ano – Ramo SI 
+Worksheet 9 
+ 
+Topics: File upload and download 
+Part I. File Upload/Download Backend 
+1. Create a Document entity with attributes id (primary key of type long), filename and 
+filepath (both String) and student (of class Student). Add the following annotation to 
+attribute id, so it’s automatically generated (no need to include it on creation): 
+@GeneratedValue(strategy = GenerationType.AUTO) 
+ 
+2. Add the necessary constructors (remember id does not need to be set on creation), setters 
+and getters to the Document entity.  
+3. Modify the Student entity to include a list of documents. By default, this list will be empty. 
+Add the necessary setters and getters and “add” and “remove” methods.  
+4. Add the necessary annotations to both Student and Document entities to establish a one-to-
+many relationship between students and documents.  
+5. Add the following named query to the Document entity: 
+@NamedQuery(name = "getStudentDocuments", 
+    query = "SELECT doc FROM Document doc WHERE doc.student.username = :username") 
+ 
+6. Create a DocumentDTO with attributes id and filename. Add all the necessary boilerplate.  
+ 
+7. Add these dependencies to your pom.xml: 
+<dependency> 
+    <groupId>org.jboss.resteasy</groupId> 
+    <artifactId>resteasy-multipart-provider</artifactId> 
+    <version>6.2.12.Final</version> 
+    <scope>provided</scope> 
+</dependency> 
+ 
+8. Create a DocumentService in the ws package with endpoints /documents, 
+/documents/upload and /documents/download/{id}: 
+
+Desenvolvimento de Aplicações Empresariais  Worksheet 9 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 
+ 2 / 7 
+@Path("documents") 
+@Produces(MediaType.APPLICATION_JSON) 
+@Consumes(MediaType.APPLICATION_JSON) 
+@Authenticated 
+@RolesAllowed({"Student", "Administrator"}) 
+public class DocumentService { 
+    @Context 
+    private SecurityContext securityContext; 
+ 
+    @EJB 
+    private DocumentBean documentBean; 
+ 
+    @POST 
+    @Path("upload") 
+    @Consumes(MediaType.MULTIPART_FORM_DATA) 
+    public Response upload(MultipartFormDataInput form)  
+                                   throws IOException, MyEntityNotFoundException { 
+        var username = securityContext.getUserPrincipal().getName(); 
+ 
+        var filePart = form.getFormDataMap().get("file").get(0); 
+        var fileName = filePart.getFileName(); 
+        var inputStream = filePart.getBody(InputStream.class, null); 
+ 
+        documentBean.create(fileName, username, inputStream); 
+ 
+        return Response.ok("File uploaded successfully: " + fileName) 
+                .build(); 
+    } 
+ 
+    @GET 
+    @Path("download/{id}") 
+    @Produces(MediaType.APPLICATION_OCTET_STREAM) 
+    public Response download(@PathParam("id") long id)  
+                                                throws MyEntityNotFoundException { 
+        var document = documentBean.find(id); 
+        var filePath = Paths.get(document.getFilepath()); 
+ 
+        // TODO: What if user is not allowed to download this specific document? 
+ 
+        if (!Files.exists(filePath) || !Files.isRegularFile(filePath)) { 
+            return Response.status(Response.Status.NOT_FOUND) 
+                    .entity("File not found: " + filePath) 
+Desenvolvimento de Aplicações Empresariais  Worksheet 9 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 
+ 3 / 7 
+                    .build(); 
+        } 
+ 
+        var filename = document.getFilename(); 
+ 
+        return Response.ok(filePath.toFile()) 
+                .header("Content-Disposition",  
+                                       "attachment;filename=\"" + filename + "\"") 
+                .build(); 
+    } 
+ 
+    @GET 
+    public Response getStudentDocs() { 
+        var username = securityContext.getUserPrincipal().getName(); 
+        var documents = documentBean.getStudentDocuments(username); 
+        return Response.ok(DocumentDTO.from(documents)).build(); 
+    } 
+} 
+ 
+9. Create a DocumentBean EJB with methods create, find and getStudentDocuments: 
+@Stateless 
+public class DocumentBean { 
+    private static final String UPLOAD_DIR = "/tmp/uploads"; 
+ 
+    @EJB 
+    private StudentBean studentBean; 
+ 
+    @PersistenceContext 
+    private EntityManager entityManager; 
+ 
+    public void create(String filename, String username, InputStream stream)  
+                                   throws MyEntityNotFoundException, IOException { 
+        var student = studentBean.find(username); 
+        var targetDirectoryPath = Paths.get(UPLOAD_DIR, username); 
+        if (!Files.exists(targetDirectoryPath)) { 
+            Files.createDirectories(targetDirectoryPath); 
+        } 
+        var targetFilePath = targetDirectoryPath 
+                .resolve("file_" + UUID.randomUUID()); 
+        Files.copy(stream, targetFilePath, StandardCopyOption.REPLACE_EXISTING);` 
+        var document = new Document(filename, targetFilePath.toString(), student); 
+        entityManager.persist(document); 
+Desenvolvimento de Aplicações Empresariais  Worksheet 9 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 
+ 4 / 7 
+        student.addDocument(document); 
+    } 
+ 
+    public Document find(Long id) throws MyEntityNotFoundException { 
+        var document = entityManager.find(Document.class, id); 
+        if (document == null) 
+            throw new MyEntityNotFoundException("Document " + id + "not found"); 
+        return document; 
+    } 
+ 
+    public List<Document> getStudentDocuments(String username) { 
+        return entityManager 
+                .createNamedQuery("getStudentDocuments", Document.class) 
+                .setParameter("username", username) 
+                .getResultList(); 
+    } 
+} 
+ 
+10. Test the file upload and download services with the following HTTP requests: 
+### Upload document 
+POST http://localhost:8080/academics/api/documents/upload HTTP/1.1 
+Authorization: Bearer << insert token here >> 
+Content-Type: multipart/form-data; boundary=boundary 
+ 
+--boundary 
+Content-Disposition: form-data; name="file"; filename="file1.txt" 
+Content-Type: text/plain 
+ 
+contents of the file 
+--boundary-- 
+ 
+### Download document 
+GET http://localhost:8080/academics/api/documents/download/1 HTTP/1.1 
+Authorization: Bearer << insert token here >> 
+ 
+Desenvolvimento de Aplicações Empresariais  Worksheet 9 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 
+ 5 / 7 
+Part II. File Upload/Download Frontend 
+11. In the pages directory of your Nuxt project, create a file named upload-test.vue with 
+the following content:  
+<template> 
+  <h2>File Upload</h2> 
+  <input 
+      type="file" 
+      ref="fileInput" 
+      multiple 
+      accept="image/jpeg,image/png" 
+      @change="files = $event.target.files" 
+  /> 
+ 
+  <button @click="uploadFiles()">Upload</button> 
+ 
+  <h2>Files</h2> 
+  <div v-if="files && files.length > 0"> 
+    <p>Selected files:</p> 
+    <ul> 
+      <li v-for="(file, i) in files" :key="i"> 
+        {{ file.name }} ({{ (file.size / 1024 / 1024).toFixed(2) }} MB) 
+      </li> 
+    </ul> 
+  </div> 
+  <div v-else>No files selected.</div> 
+ 
+  <h2>User Info</h2> 
+  {{ user ? `Welcome, ${user.name}` : 'Not logged in' }} 
+ 
+  <h2>Messages</h2> 
+  <div v-if="messages.length > 0"> 
+    <div v-for="message in messages"> 
+      <pre>{{ message }}</pre> 
+    </div> 
+  </div> 
+  <div v-else>No messages yet.</div> 
+</template> 
+ 
+<script setup> 
+import { useAuthStore } from '~/stores/auth-store.js' 
+ 
+Desenvolvimento de Aplicações Empresariais  Worksheet 9 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 
+ 6 / 7 
+const authStore = useAuthStore() 
+const { token, user } = storeToRefs(authStore) 
+const config = useRuntimeConfig() 
+const api = config.public.apiBase 
+ 
+const fileInput = ref(null) 
+const files = ref(null) 
+const messages = ref([]) 
+ 
+async function uploadFiles() { 
+  if (!files.value || files.value.length === 0) { 
+    return messages.value.push('No files selected for upload.') 
+  } 
+  Array.from(files.value).forEach(async (file) => { 
+    const formData = new FormData() 
+    formData.append('file', file) 
+    await $fetch(`${api}/documents/upload`, { 
+      method: 'POST', 
+      body: formData, 
+      headers: { 
+        Authorization: `Bearer ${token.value}`, 
+      }, 
+      onResponse({ request, response, options }) { 
+        messages.value.push({ 
+          method: options.method, 
+          request: request, 
+          status: response.status, 
+          statusText: response.statusText, 
+          payload: response._data, 
+        }) 
+      }, 
+    }) 
+  }) 
+  return messages.value.push('Files uploaded successfully.') 
+} 
+</script> 
+ 
+12. Test this page by trying to upload one and more than one file. Make sure you’re logged in 
+before uploading.   
+ 
+Desenvolvimento de Aplicações Empresariais  Worksheet 9 
+Eng.ª Informática- 3.º ano – Ramo SI - 2025-26-1S 
+ 
+ 7 / 7 
+EXTRA / HOMEWORK: 
+Implement a page that lists all the documents for a given student and allows the download of 
+each one.  
+ 
+Bibliography 
+Java EE Tutorial 8 (all of it) 
+NUXT 

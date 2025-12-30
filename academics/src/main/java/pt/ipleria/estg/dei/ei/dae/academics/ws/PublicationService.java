@@ -10,6 +10,7 @@ import pt.ipleria.estg.dei.ei.dae.academics.ejbs.PublicationBean;
 import pt.ipleria.estg.dei.ei.dae.academics.dtos.PublicationDTO;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Publication;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.PublicationHistory;
+import pt.ipleria.estg.dei.ei.dae.academics.security.Authenticated;
 
 import java.io.InputStream;
 import java.io.IOException;
@@ -24,121 +25,158 @@ import java.nio.charset.StandardCharsets;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class PublicationService {
-/*
     @EJB
     private PublicationBean publicationBean;
 
-    // EP01 - criar nova publicação (owner obtido do SecurityContext)
+    // EP01 - upload de publicação (PDF ou ZIP) - cria publicação diretamente (padrão Ficha 9)
     @POST
-    public Response createPublication(PublicationDTO dto, @Context SecurityContext sc) {
-        String owner = null;
-        if (sc != null && sc.getUserPrincipal() != null) owner = sc.getUserPrincipal().getName();
-        Publication p = new Publication();
-        p.setTitle(dto.title);
-        p.setAuthors(dto.authors);
-        p.setScientificArea(dto.scientificArea);
-        p.setTags(dto.tags);
-        p.setVisibility(dto.visibility == null ? "internal" : dto.visibility);
-        p = publicationBean.create(owner, p);
-        return Response.status(Response.Status.CREATED).entity(PublicationDTO.from(p)).build();
+    @Path("upload")
+    @Authenticated
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response uploadPublication(MultipartFormDataInput form, 
+                                      @Context SecurityContext sc) {
+        try {
+            var username = sc != null && sc.getUserPrincipal() != null ? 
+                sc.getUserPrincipal().getName() : null;
+            if (username == null) {
+                return Response.status(Response.Status.UNAUTHORIZED).build();
+            }
+
+            var parts = form.getFormDataMap().get("file");
+            if (parts == null || parts.isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", "Missing form field 'file'"))
+                    .build();
+            }
+            
+            InputPart filePart = parts.get(0);
+            String filename = filePart.getFileName(); // Padrão Ficha 9
+            if (filename == null || filename.isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", "Filename is required"))
+                    .build();
+            }
+            
+            InputStream inputStream = filePart.getBody(InputStream.class, null);
+            
+            Publication p = publicationBean.upload(username, filename, inputStream);
+            if (p == null) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", "Erro ao criar publicação"))
+                    .build();
+            }
+            
+            return Response.status(Response.Status.CREATED)
+                .entity(PublicationDTO.from(p))
+                .build();
+        } catch (Exception e) {
+            return Response.serverError()
+                .entity(Map.of("error", e.getMessage()))
+                .build();
+        }
     }
 
-    // EP02 - detalhe
+    // EP02 - obter detalhe de uma publicação
     @GET
     @Path("{id}")
+    @Authenticated
     public Response getPublication(@PathParam("id") Long id) {
         Publication p = publicationBean.find(id);
         if (p == null) return Response.status(Response.Status.NOT_FOUND).build();
         PublicationDTO dto = PublicationDTO.from(p);
-        // resumo, rating, comments -> aqui usar campos existentes ou calcular
         return Response.ok(dto).build();
     }
 
-    // EP03 - editar campos (ex: summary) - PATCH simplificado como POST/PUT
+    // EP03 - editar campos (ex: summary, visibility) - PATCH para atualizar campos parciais
     @PATCH
     @Path("{id}")
-    public Response patchPublication(@PathParam("id") Long id, PublicationDTO dto, @QueryParam("editor") String editor) {
-        if (dto.summary != null) {
-            Publication p = publicationBean.updateSummary(id, dto.summary, editor);
-            if (p == null) return Response.status(Response.Status.NOT_FOUND).build();
-            return Response.ok(java.util.Map.of("message", "Publicacao atualizada com sucesso")).build();
+    @Authenticated
+    public Response patchPublication(@PathParam("id") Long id, 
+                                     Map<String, Object> body, 
+                                     @Context SecurityContext sc) {
+        String editor = sc != null && sc.getUserPrincipal() != null ? 
+            sc.getUserPrincipal().getName() : null;
+        if (editor == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
         }
-        return Response.status(Response.Status.BAD_REQUEST).build();
+
+        Publication p = publicationBean.find(id);
+        if (p == null) return Response.status(Response.Status.NOT_FOUND).build();
+
+        boolean updated = false;
+
+        if (body.containsKey("summary") && body.get("summary") != null) {
+            p = publicationBean.updateSummary(id, body.get("summary").toString(), editor);
+            updated = true;
+        }
+
+        if (body.containsKey("visibility") && body.get("visibility") != null) {
+            p = publicationBean.updateVisibility(id, body.get("visibility").toString(), editor);
+            updated = true;
+        }
+
+        if (!updated) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity(Map.of("error", "Nenhum campo válido para atualizar")).build();
+        }
+
+        return Response.ok(PublicationDTO.from(p)).build();
     }
 
-    // EP04 - histórico
+    // EP04 - histórico de edições da publicação
     @GET
     @Path("{id}/history")
+    @Authenticated
     public Response getHistory(@PathParam("id") Long id) {
         List<PublicationHistory> history = publicationBean.getHistory(id);
-        return Response.ok(java.util.Map.of("publicationId", id, "history", history)).build();
+        return Response.ok(Map.of("publicationId", id, "history", history)).build();
     }
 
-    // EP05 - alterar visibilidade
-    @PATCH
-    @Path("{id}/visibility")
-    public Response changeVisibility(@PathParam("id") Long id, java.util.Map<String,String> body, @QueryParam("editor") String editor) {
-        String visibility = body.get("visibility");
-        if (visibility == null) return Response.status(Response.Status.BAD_REQUEST).build();
-        Publication p = publicationBean.changeVisibility(id, visibility, editor);
-        if (p == null) return Response.status(Response.Status.NOT_FOUND).build();
-        return Response.ok(java.util.Map.of("id", p.getId(), "title", p.getTitle(), "visibility", p.getVisibility())).build();
-    }
-
-    // EP06 - minhas publicações
+    // EP07 - listar todas as publicações visíveis
     @GET
-    @Path("mine")
-    public Response myPublications(@QueryParam("owner") String owner) {
-        List<Publication> list = publicationBean.findByOwner(owner);
-        List<Object> out = list.stream().map(p -> java.util.Map.of(
-                "id", p.getId(),
-                "title", p.getTitle(),
-                "visibility", p.getVisibility(),
-                "lastEdited", p.getLastEdited()
-        )).collect(Collectors.toList());
-        return Response.ok(out).build();
-    }
-
-    // EP07 - listar visíveis (simples)
-    @GET
-    public Response listVisible(@QueryParam("search") String search, @QueryParam("sortBy") String sortBy, @QueryParam("order") String order) {
+    @Authenticated
+    public Response listVisible(@QueryParam("search") String search, 
+                                 @QueryParam("sortBy") String sortBy, 
+                                 @QueryParam("order") String order) {
         List<Publication> list = publicationBean.findVisible(search, sortBy, order);
-        List<Object> out = list.stream().map(p -> java.util.Map.of(
-                "id", p.getId(),
-                "title", p.getTitle(),
-                "author", p.getAuthors() != null && !p.getAuthors().isEmpty() ? p.getAuthors().get(0) : null,
-                "visibility", p.getVisibility(),
-                "tags", p.getTags(),
-                "ratingAvg", p.getRatingAvg()
-        )).collect(Collectors.toList());
+        List<PublicationDTO> out = list.stream()
+            .map(PublicationDTO::from)
+            .collect(Collectors.toList());
         return Response.ok(out).build();
     }
 
-    // EP08 - upload ficheiro adapted: accepts multipart/form-data with field 'file' and uses SecurityContext
+    // EP08 - atualizar ficheiro de publicação existente (opcional)
     @POST
     @Path("{id}/file")
+    @Authenticated
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response uploadFile(@PathParam("id") Long id, MultipartFormDataInput form, @Context SecurityContext sc) {
+    public Response updateFile(@PathParam("id") Long id, 
+                               MultipartFormDataInput form, 
+                               @Context SecurityContext sc) {
         try {
-            var username = sc != null && sc.getUserPrincipal() != null ? sc.getUserPrincipal().getName() : null;
-            if (username == null) username = "unknown";
+            var username = sc != null && sc.getUserPrincipal() != null ? 
+                sc.getUserPrincipal().getName() : null;
+            if (username == null) {
+                return Response.status(Response.Status.UNAUTHORIZED).build();
+            }
 
-            // get the first part named 'file'
             var parts = form.getFormDataMap().get("file");
             if (parts == null || parts.isEmpty()) {
-                return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", "Missing form field 'file'"))
-                        .build();
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", "Missing form field 'file'"))
+                    .build();
             }
             InputPart filePart = parts.get(0);
-            String filename = extractFileName(filePart);
+            String filename = filePart.getFileName(); // Padrão Ficha 9
             InputStream inputStream = filePart.getBody(InputStream.class, null);
 
-            Publication p = publicationBean.saveFile(id, inputStream, filename, username);
+            Publication p = publicationBean.updateFile(id, inputStream, filename, username);
             if (p == null) return Response.status(Response.Status.NOT_FOUND).build();
-            return Response.ok(Map.of("id", p.getId(), "file", p.getFileName())).build();
+            return Response.ok(PublicationDTO.from(p)).build();
         } catch (Exception e) {
-            return Response.serverError().entity(java.util.Map.of("error", e.getMessage())).build();
+            return Response.serverError().entity(Map.of("error", e.getMessage())).build();
         }
     }
 
@@ -158,5 +196,5 @@ public class PublicationService {
             }
         } catch (Exception ignored) {}
         return null;
-    }*/
+    }
 }

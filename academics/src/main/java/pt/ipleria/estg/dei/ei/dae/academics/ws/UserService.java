@@ -1,5 +1,6 @@
 package pt.ipleria.estg.dei.ei.dae.academics.ws;
 
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.EJB;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -10,10 +11,16 @@ import jakarta.ws.rs.core.Context;
 import pt.ipleria.estg.dei.ei.dae.academics.dtos.CreateUserDTO;
 import pt.ipleria.estg.dei.ei.dae.academics.dtos.UserDTO;
 import pt.ipleria.estg.dei.ei.dae.academics.ejbs.UserBean;
+import pt.ipleria.estg.dei.ei.dae.academics.ejbs.PublicationBean;
+import pt.ipleria.estg.dei.ei.dae.academics.ejbs.UserActivityBean;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.User;
+import pt.ipleria.estg.dei.ei.dae.academics.entities.Publication;
+import pt.ipleria.estg.dei.ei.dae.academics.entities.UserActivity;
 import pt.ipleria.estg.dei.ei.dae.academics.security.Authenticated;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Path("/users")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -23,9 +30,16 @@ public class UserService {
     @EJB
     private UserBean userBean;
 
+    @EJB
+    private PublicationBean publicationBean;
+
+    @EJB
+    private UserActivityBean userActivityBean;
+
     // EP01 — criar utilizador (admin)
     @POST
     @Authenticated
+    @RolesAllowed({"Administrator"})
     public Response create(CreateUserDTO dto) {
 
         User user = userBean.create(
@@ -64,6 +78,7 @@ public class UserService {
     // EP05 — listar utilizadores
     @GET
     @Authenticated
+    @RolesAllowed({"Administrator", "Responsible"})
     public List<UserDTO> list() {
         return userBean.findAll()
                 .stream()
@@ -75,6 +90,7 @@ public class UserService {
     @PUT
     @Path("/{username}/role")
     @Authenticated
+    @RolesAllowed({"Administrator"})
     public Response changeRole(@PathParam("username") String username,
                                CreateUserDTO dto) {
 
@@ -87,6 +103,7 @@ public class UserService {
     @PATCH
     @Path("/{username}")
     @Authenticated
+    @RolesAllowed({"Administrator"})
     public Response setActive(@PathParam("username") String username,
                               String body) {
 
@@ -95,5 +112,83 @@ public class UserService {
 
         return Response.ok("{\"username\":\"" + username + "\"}")
                 .build();
+    }
+
+    // EP08 — listar publicações de um utilizador
+    @GET
+    @Path("/{username}/publications")
+    @Authenticated
+    public Response getUserPublications(@PathParam("username") String username,
+                                         @Context SecurityContext sc) {
+        User user = userBean.find(username);
+        if (user == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        // Verificar se o utilizador pode ver estas publicações
+        String currentUser = sc != null && sc.getUserPrincipal() != null ?
+            sc.getUserPrincipal().getName() : null;
+        
+        // Só pode ver as suas próprias publicações, ou se for Admin/Responsible
+        if (currentUser == null || 
+            (!currentUser.equals(username) && 
+             !sc.isUserInRole("Administrator") && 
+             !sc.isUserInRole("Responsible"))) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        }
+
+        List<Publication> publications = publicationBean.findByOwner(username);
+        List<Map<String, Object>> result = publications.stream()
+            .map(p -> Map.of(
+                "id", p.getId(),
+                "title", p.getTitle() != null ? p.getTitle() : "",
+                "visibility", p.getVisibility() != null ? p.getVisibility() : "",
+                "uploadDate", p.getUploadDate() != null ? p.getUploadDate().toString() : "",
+                "lastEdited", p.getLastEdited() != null ? p.getLastEdited().toString() : ""
+            ))
+            .collect(Collectors.toList());
+
+        return Response.ok(result).build();
+    }
+
+    // EP09 — consultar histórico de atividade de um utilizador
+    @GET
+    @Path("/{username}/activity")
+    @Authenticated
+    public Response getUserActivity(@PathParam("username") String username,
+                                     @Context SecurityContext sc) {
+        User user = userBean.find(username);
+        if (user == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        // Verificar se o utilizador pode ver este histórico
+        String currentUser = sc != null && sc.getUserPrincipal() != null ?
+            sc.getUserPrincipal().getName() : null;
+        
+        // Só pode ver o seu próprio histórico, ou se for Administrator
+        if (currentUser == null || 
+            (!currentUser.equals(username) && !sc.isUserInRole("Administrator"))) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        }
+
+        List<UserActivity> activities = userActivityBean.findByUser(username);
+        List<Map<String, Object>> result = activities.stream()
+            .map(a -> {
+                Map<String, Object> map = new java.util.HashMap<>();
+                map.put("id", a.getId());
+                map.put("activityType", a.getActivityType());
+                map.put("description", a.getDescription() != null ? a.getDescription() : "");
+                map.put("activityDate", a.getActivityDate() != null ? a.getActivityDate().toString() : "");
+                if (a.getPublication() != null) {
+                    map.put("publicationId", a.getPublication().getId());
+                    map.put("publicationTitle", a.getPublication().getTitle() != null ? 
+                        a.getPublication().getTitle() : "");
+                }
+                return map;
+            })
+            .collect(Collectors.toList());
+
+        return Response.ok(result).build();
     }
 }

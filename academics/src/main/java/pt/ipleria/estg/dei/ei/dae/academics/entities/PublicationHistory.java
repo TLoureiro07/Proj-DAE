@@ -14,7 +14,9 @@ public class PublicationHistory {
     @JoinColumn(name = "publication_id", nullable = false)
     private Publication publication;
 
-    private String editedBy;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "edited_by_username")
+    private User editedBy;
 
     private LocalDateTime editDate;
 
@@ -28,8 +30,8 @@ public class PublicationHistory {
     public Publication getPublication() { return publication; }
     public void setPublication(Publication publication) { this.publication = publication; }
 
-    public String getEditedBy() { return editedBy; }
-    public void setEditedBy(String editedBy) { this.editedBy = editedBy; }
+    public User getEditedBy() { return editedBy; }
+    public void setEditedBy(User editedBy) { this.editedBy = editedBy; }
 
     public LocalDateTime getEditDate() { return editDate; }
     public void setEditDate(LocalDateTime editDate) { this.editDate = editDate; }
