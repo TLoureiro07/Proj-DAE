@@ -1,6 +1,6 @@
-### Variáveis (podes alterar o token depois do login)
+### variaveis
 @baseUrl = http://localhost:8080/academics/api
-@token = 
+@token = eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJBZG1pbmlzdHJhdG9yIiwiaWF0IjoxNzY3MTA5MDYxLCJleHAiOjE3NjcxMTI2NjF9.57UUniaV1VtwMm7PhNR2BzQnDywAb_ul2X2uuJf8VD0q-YEk1nqRbaXuaXUjS1eN
 
 ### ============================================
 ### AUTENTICAÇÃO
@@ -145,12 +145,3 @@ Content-Type: application/pdf
 
 < ./path/to/your/file.pdf
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
-
-### ============================================
-### TESTE SIMPLES (sem autenticação)
-### ============================================
-
-### Hello World (teste básico)
-GET {{baseUrl}}/hello-world
-Accept: text/plain
-
