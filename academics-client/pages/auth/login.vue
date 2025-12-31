@@ -89,8 +89,20 @@ async function login() {
       router.push('/')
     }
   } catch (e) {
-    error.value = 'Erro ao fazer login. Verifica o username e password.'
     console.error('Erro no login:', e)
+    
+    // Tentar extrair a mensagem de erro do backend
+    if (e.data && e.data.error) {
+      error.value = e.data.error
+    } else if (e.response && e.response._data && e.response._data.error) {
+      error.value = e.response._data.error
+    } else if (e.status === 401 || e.statusCode === 401) {
+      error.value = 'Username ou palavra-passe incorretos'
+    } else if (e.status === 400 || e.statusCode === 400) {
+      error.value = 'Dados inválidos. Verifica os campos preenchidos.'
+    } else {
+      error.value = `Erro ao fazer login: ${e.message || 'Erro desconhecido'}`
+    }
   } finally {
     loading.value = false
   }

@@ -1,6 +1,6 @@
 ### variaveis
 @baseUrl = http://localhost:8080/academics/api
-@token = eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJBZG1pbmlzdHJhdG9yIiwiaWF0IjoxNzY3MTA5MDYxLCJleHAiOjE3NjcxMTI2NjF9.57UUniaV1VtwMm7PhNR2BzQnDywAb_ul2X2uuJf8VD0q-YEk1nqRbaXuaXUjS1eN
+@token = eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJBZG1pbmlzdHJhdG9yIiwiaWF0IjoxNzY3MTk3MjE4LCJleHAiOjE3NjcyMDA4MTh9.OqcIl0MlPE4jfmUt6VlKATJW1FiHqJPu26vsg-u-dv2EP6iHrTTgUZfKLCiuDUNJ
 
 ### ============================================
 ### AUTENTICAÇÃO

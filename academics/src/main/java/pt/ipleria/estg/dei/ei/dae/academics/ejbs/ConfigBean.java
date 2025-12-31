@@ -27,7 +27,7 @@ public class ConfigBean {
     public void populateDB() {
         System.out.println("Hello Java EE!");
         
-        // Criar utilizadores iniciais para testes
+        // Criar utilizadores iniciais para testes apenas se não existirem
         // Password para todos: "pass"
         User admin = null;
         if (userBean.find("admin") == null) {
@@ -35,11 +35,14 @@ public class ConfigBean {
             System.out.println("Created user: admin");
         } else {
             admin = userBean.find("admin");
+            System.out.println("User admin already exists");
         }
         
         if (userBean.find("responsible") == null) {
             userBean.create("responsible", "pass", "Responsible User", "responsible@example.com", "Responsible");
             System.out.println("Created user: responsible");
+        } else {
+            System.out.println("User responsible already exists");
         }
         
         User collaborator = null;
@@ -48,6 +51,7 @@ public class ConfigBean {
             System.out.println("Created user: collaborator");
         } else {
             collaborator = userBean.find("collaborator");
+            System.out.println("User collaborator already exists");
         }
 
         // Criar tags de teste
@@ -63,20 +67,27 @@ public class ConfigBean {
             System.out.println("Created tag: Projeto Y");
         }
 
-        // Criar publicação de teste
+        // Criar publicação de teste (comentado para evitar problemas durante @PostConstruct)
+        // As publicações podem ser criadas via API depois do deployment
+        /*
         if (collaborator != null && publicationBean.findByOwner("collaborator").size() == 0) {
-            Publication testPub = new Publication();
-            testPub.setTitle("Deep Learning Applications in Medical Imaging");
-            testPub.setAuthors(Arrays.asList("João Silva", "Maria Santos", "Pedro Costa"));
-            testPub.setScientificArea("Ciência de Dados");
-            testPub.setSummary("Este artigo explora as aplicações de deep learning no processamento de imagens médicas, apresentando técnicas avançadas de redes neurais convolucionais para diagnóstico assistido por computador.");
-            testPub.setVisibility("public");
-            
-            Publication created = publicationBean.create("collaborator", testPub);
-            if (created != null && tagProjetoX != null) {
-                publicationBean.addTag(created.getId(), tagProjetoX.getId());
-                System.out.println("Created test publication: " + created.getTitle());
+            try {
+                Publication testPub = new Publication();
+                testPub.setTitle("Deep Learning Applications in Medical Imaging");
+                testPub.setAuthors(Arrays.asList("João Silva", "Maria Santos", "Pedro Costa"));
+                testPub.setScientificArea("Ciência de Dados");
+                testPub.setSummary("Este artigo explora as aplicações de deep learning no processamento de imagens médicas, apresentando técnicas avançadas de redes neurais convolucionais para diagnóstico assistido por computador.");
+                testPub.setVisibility("public");
+                
+                Publication created = publicationBean.create("collaborator", testPub);
+                if (created != null && tagProjetoX != null) {
+                    publicationBean.addTag(created.getId(), tagProjetoX.getId());
+                    System.out.println("Created test publication: " + created.getTitle());
+                }
+            } catch (Exception e) {
+                System.out.println("Warning: Could not create test publication: " + e.getMessage());
             }
         }
+        */
     }
 }

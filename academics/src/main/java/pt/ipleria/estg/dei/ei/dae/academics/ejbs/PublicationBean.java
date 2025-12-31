@@ -54,6 +54,7 @@ public class PublicationBean {
             // Inicializar relações lazy antes de fechar a sessão
             Hibernate.initialize(p.getTags());
             Hibernate.initialize(p.getOwner());
+            Hibernate.initialize(p.getAuthors());
         }
         return p;
     }
@@ -65,6 +66,7 @@ public class PublicationBean {
         for (Publication p : publications) {
             Hibernate.initialize(p.getTags());
             Hibernate.initialize(p.getOwner());
+            Hibernate.initialize(p.getAuthors());
         }
         return publications;
     }
@@ -76,6 +78,7 @@ public class PublicationBean {
         for (Publication p : publications) {
             Hibernate.initialize(p.getTags());
             Hibernate.initialize(p.getOwner());
+            Hibernate.initialize(p.getAuthors());
         }
         return publications;
     }

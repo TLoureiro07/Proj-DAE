@@ -11,13 +11,13 @@ public class CommentDTO {
     public String authorUsername;
     public String authorName;
     public Long publicationId;
-    public LocalDateTime commentDate;
+    public String commentDate;  // Convertido para String para serialização JSON
     public boolean hidden;
 
     public CommentDTO() {}
 
     public CommentDTO(Long id, String text, String authorUsername, String authorName, 
-                      Long publicationId, LocalDateTime commentDate, boolean hidden) {
+                      Long publicationId, String commentDate, boolean hidden) {
         this.id = id;
         this.text = text;
         this.authorUsername = authorUsername;
@@ -35,7 +35,7 @@ public class CommentDTO {
             author != null ? author.getUsername() : null,
             author != null ? author.getName() : null,
             comment.getPublication() != null ? comment.getPublication().getId() : null,
-            comment.getCommentDate(),
+            comment.getCommentDate() != null ? comment.getCommentDate().toString() : null,
             comment.isHidden()
         );
     }

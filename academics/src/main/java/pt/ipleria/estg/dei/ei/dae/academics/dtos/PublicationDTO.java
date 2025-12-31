@@ -15,11 +15,11 @@ public class PublicationDTO {
     public List<TagDTO> tags;
     public String visibility;
     public String owner;
-    public LocalDate uploadDate;
+    public String uploadDate;  // Convertido para String para serialização JSON
     public String fileName;
     public String summary;
     public Double ratingAvg;
-    public LocalDateTime lastEdited;
+    public String lastEdited;  // Convertido para String para serialização JSON
 
     public static PublicationDTO from(Publication p) {
         PublicationDTO d = new PublicationDTO();
@@ -32,11 +32,11 @@ public class PublicationDTO {
             List.of();
         d.visibility = p.getVisibility();
         d.owner = p.getOwner() != null ? p.getOwner().getUsername() : null;
-        d.uploadDate = p.getUploadDate();
+        d.uploadDate = p.getUploadDate() != null ? p.getUploadDate().toString() : null;
         d.fileName = p.getFileName();
         d.summary = p.getSummary();
         d.ratingAvg = p.getRatingAvg();
-        d.lastEdited = p.getLastEdited();
+        d.lastEdited = p.getLastEdited() != null ? p.getLastEdited().toString() : null;
         return d;
     }
 }

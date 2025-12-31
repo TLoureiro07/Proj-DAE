@@ -11,12 +11,12 @@ public class RatingDTO {
     public String authorUsername;
     public String authorName;
     public Long publicationId;
-    public LocalDateTime ratingDate;
+    public String ratingDate;  // Convertido para String para serialização JSON
 
     public RatingDTO() {}
 
     public RatingDTO(Long id, Integer value, String authorUsername, String authorName, 
-                    Long publicationId, LocalDateTime ratingDate) {
+                    Long publicationId, String ratingDate) {
         this.id = id;
         this.value = value;
         this.authorUsername = authorUsername;
@@ -33,7 +33,7 @@ public class RatingDTO {
             author != null ? author.getUsername() : null,
             author != null ? author.getName() : null,
             rating.getPublication() != null ? rating.getPublication().getId() : null,
-            rating.getRatingDate()
+            rating.getRatingDate() != null ? rating.getRatingDate().toString() : null
         );
     }
 }
