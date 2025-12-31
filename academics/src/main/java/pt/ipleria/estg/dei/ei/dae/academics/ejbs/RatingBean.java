@@ -72,6 +72,15 @@ public class RatingBean {
         return em.find(Rating.class, id);
     }
 
+    public Rating findWithRelations(Long id) {
+        List<Rating> ratings = em.createQuery(
+            "SELECT r FROM Rating r LEFT JOIN FETCH r.author LEFT JOIN FETCH r.publication WHERE r.id = :id",
+            Rating.class)
+            .setParameter("id", id)
+            .getResultList();
+        return ratings.isEmpty() ? null : ratings.get(0);
+    }
+
     public Rating findByUserAndPublication(Long publicationId, String username) {
         List<Rating> ratings = em.createQuery(
             "SELECT r FROM Rating r WHERE r.publication.id = :publicationId AND r.author.username = :username",
@@ -85,7 +94,7 @@ public class RatingBean {
 
     public List<Rating> findByPublication(Long publicationId) {
         return em.createQuery(
-            "SELECT r FROM Rating r WHERE r.publication.id = :publicationId ORDER BY r.ratingDate DESC",
+            "SELECT r FROM Rating r LEFT JOIN FETCH r.author LEFT JOIN FETCH r.publication WHERE r.publication.id = :publicationId ORDER BY r.ratingDate DESC",
             Rating.class)
             .setParameter("publicationId", publicationId)
             .getResultList();

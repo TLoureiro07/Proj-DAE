@@ -25,12 +25,12 @@
         <h2>Avaliar Publicação</h2>
         <div>
           <label>Rating (1-5): </label>
-          <select v-model="newRating.value">
-            <option value="1">1 estrela</option>
-            <option value="2">2 estrelas</option>
-            <option value="3">3 estrelas</option>
-            <option value="4">4 estrelas</option>
-            <option value="5">5 estrelas</option>
+          <select v-model.number="newRating.value">
+            <option :value="1">1 estrela</option>
+            <option :value="2">2 estrelas</option>
+            <option :value="3">3 estrelas</option>
+            <option :value="4">4 estrelas</option>
+            <option :value="5">5 estrelas</option>
           </select>
           <button @click="submitRating" :disabled="submitting">Avaliar</button>
         </div>
@@ -173,6 +173,16 @@ async function submitComment() {
 }
 
 async function submitRating() {
+  // Garantir que temos um valor válido
+  const ratingValue = typeof newRating.value === 'number' 
+    ? newRating.value 
+    : parseInt(newRating.value)
+  
+  if (!ratingValue || isNaN(ratingValue) || ratingValue < 1 || ratingValue > 5) {
+    alert('Por favor, seleciona um rating válido entre 1 e 5')
+    return
+  }
+  
   submitting.value = true
   try {
     await $fetch(`${api}/publications/${publicationId}/ratings`, {
@@ -181,12 +191,21 @@ async function submitRating() {
         'Authorization': `Bearer ${token.value}`,
         'Content-Type': 'application/json'
       },
-      body: { value: parseInt(newRating.value) }
+      body: { value: ratingValue }
     })
     await loadRatings()
     await loadPublication() // Recarregar para atualizar rating médio
   } catch (e) {
-    alert('Erro ao avaliar: ' + (e.message || 'Erro desconhecido'))
+    console.error('Erro completo no rating:', e)
+    let errorMsg = 'Erro ao avaliar'
+    if (e.data?.error) {
+      errorMsg += ': ' + e.data.error
+    } else if (e.response?._data?.error) {
+      errorMsg += ': ' + e.response._data.error
+    } else if (e.message) {
+      errorMsg += ': ' + e.message
+    }
+    alert(errorMsg)
   } finally {
     submitting.value = false
   }

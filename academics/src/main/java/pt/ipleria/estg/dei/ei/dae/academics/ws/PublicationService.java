@@ -14,6 +14,7 @@ import pt.ipleria.estg.dei.ei.dae.academics.dtos.PublicationDTO;
 import pt.ipleria.estg.dei.ei.dae.academics.dtos.CommentDTO;
 import pt.ipleria.estg.dei.ei.dae.academics.dtos.RatingDTO;
 import pt.ipleria.estg.dei.ei.dae.academics.dtos.TagDTO;
+import pt.ipleria.estg.dei.ei.dae.academics.dtos.CreateRatingDTO;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Publication;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.PublicationHistory;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Comment;
@@ -356,6 +357,14 @@ public class PublicationService {
                 .build();
         }
 
+        // Recarregar com relações lazy carregadas
+        comment = commentBean.findWithRelations(comment.getId());
+        if (comment == null) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(Map.of("error", "Erro ao recarregar comentário"))
+                .build();
+        }
+
         return Response.status(Response.Status.CREATED)
             .entity(CommentDTO.from(comment))
             .build();
@@ -384,6 +393,8 @@ public class PublicationService {
         }
 
         List<Comment> comments = commentBean.findByPublication(publicationId, includeHidden);
+        
+        // As relações lazy já foram carregadas via JOIN FETCH na query
         List<CommentDTO> dtos = comments.stream()
             .map(CommentDTO::from)
             .collect(Collectors.toList());
@@ -457,7 +468,7 @@ public class PublicationService {
     @Path("{id}/ratings")
     @Authenticated
     public Response createOrUpdateRating(@PathParam("id") Long publicationId,
-                                         Map<String, Integer> body,
+                                         CreateRatingDTO dto,
                                          @Context SecurityContext sc) {
         String username = sc != null && sc.getUserPrincipal() != null ?
             sc.getUserPrincipal().getName() : null;
@@ -465,8 +476,14 @@ public class PublicationService {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
 
-        Integer value = body.get("value");
-        if (value == null || value < 1 || value > 5) {
+        if (dto == null || dto.value == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity(Map.of("error", "Campo 'value' é obrigatório"))
+                .build();
+        }
+        
+        Integer value = dto.value;
+        if (value < 1 || value > 5) {
             return Response.status(Response.Status.BAD_REQUEST)
                 .entity(Map.of("error", "Rating deve ser entre 1 e 5"))
                 .build();
@@ -479,6 +496,14 @@ public class PublicationService {
                 .build();
         }
 
+        // Recarregar com relações lazy carregadas
+        rating = ratingBean.findWithRelations(rating.getId());
+        if (rating == null) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(Map.of("error", "Erro ao recarregar rating"))
+                .build();
+        }
+
         return Response.ok(RatingDTO.from(rating)).build();
     }
 
@@ -488,6 +513,8 @@ public class PublicationService {
     @Authenticated
     public Response listRatings(@PathParam("id") Long publicationId) {
         List<Rating> ratings = ratingBean.findByPublication(publicationId);
+        
+        // As relações lazy já foram carregadas via JOIN FETCH na query
         List<RatingDTO> dtos = ratings.stream()
             .map(RatingDTO::from)
             .collect(Collectors.toList());

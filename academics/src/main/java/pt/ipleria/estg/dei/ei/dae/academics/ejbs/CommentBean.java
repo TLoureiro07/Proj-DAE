@@ -47,16 +47,25 @@ public class CommentBean {
         return em.find(Comment.class, id);
     }
 
+    public Comment findWithRelations(Long id) {
+        List<Comment> comments = em.createQuery(
+            "SELECT c FROM Comment c LEFT JOIN FETCH c.author LEFT JOIN FETCH c.publication WHERE c.id = :id",
+            Comment.class)
+            .setParameter("id", id)
+            .getResultList();
+        return comments.isEmpty() ? null : comments.get(0);
+    }
+
     public List<Comment> findByPublication(Long publicationId, boolean includeHidden) {
         if (includeHidden) {
             return em.createQuery(
-                "SELECT c FROM Comment c WHERE c.publication.id = :publicationId ORDER BY c.commentDate DESC",
+                "SELECT c FROM Comment c LEFT JOIN FETCH c.author LEFT JOIN FETCH c.publication WHERE c.publication.id = :publicationId ORDER BY c.commentDate DESC",
                 Comment.class)
                 .setParameter("publicationId", publicationId)
                 .getResultList();
         } else {
             return em.createQuery(
-                "SELECT c FROM Comment c WHERE c.publication.id = :publicationId AND c.hidden = false ORDER BY c.commentDate DESC",
+                "SELECT c FROM Comment c LEFT JOIN FETCH c.author LEFT JOIN FETCH c.publication WHERE c.publication.id = :publicationId AND c.hidden = false ORDER BY c.commentDate DESC",
                 Comment.class)
                 .setParameter("publicationId", publicationId)
                 .getResultList();
