@@ -13,6 +13,7 @@ import jakarta.ws.rs.core.SecurityContext;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.Provider;
 import pt.ipleria.estg.dei.ei.dae.academics.ejbs.UserBean;
+import org.hibernate.Hibernate;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.security.Principal;
@@ -52,8 +53,8 @@ public class AuthenticationFilter implements ContainerRequestFilter {
             }
 
             @Override
-            public boolean isUserInRole(String role) {
-                return user.getRole().equals(role);
+            public boolean isUserInRole(String s) {
+                return org.hibernate.Hibernate.getClass(user).getSimpleName().equals(s);
             }
 
             @Override

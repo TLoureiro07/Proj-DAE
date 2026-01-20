@@ -7,6 +7,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
 import jakarta.ws.rs.core.Context;
 
+import org.hibernate.Hibernate;
 import pt.ipleria.estg.dei.ei.dae.academics.dtos.LoginDTO;
 import pt.ipleria.estg.dei.ei.dae.academics.dtos.ChangePasswordDTO;
 import pt.ipleria.estg.dei.ei.dae.academics.dtos.UserDTO;
@@ -47,9 +48,10 @@ public class AuthService {
 
         User user = userBean.find(dto.username);
 
+        String role = org.hibernate.Hibernate.getClass(user).getSimpleName();
         String token = TokenIssuer.issue(
                 user.getUsername(),
-                user.getRole()
+                role
         );
 
         return Response.ok(Map.of("token", token)).build();

@@ -5,6 +5,9 @@ import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.hibernate.Hibernate;
+import pt.ipleria.estg.dei.ei.dae.academics.entities.Administrator;
+import pt.ipleria.estg.dei.ei.dae.academics.entities.Collaborator;
+import pt.ipleria.estg.dei.ei.dae.academics.entities.Responsible;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Tag;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.User;
 import pt.ipleria.estg.dei.ei.dae.academics.ejbs.TagBean;
@@ -33,23 +36,60 @@ public class UserBean {
     public User create(String username, String password, String name, String email, String role) {
         if (find(username) != null) return null;
 
-        User user = new User(
-                username,
-                Hasher.hash(password),
-                name,
-                email,
-                role
-        );
+        User user;
+        switch (role) {
+            case "Administrator":
+                user = new Administrator(username, Hasher.hash(password), name, email);
+                break;
+            case "Responsible":
+                user = new Responsible(username, Hasher.hash(password), name, email);
+                break;
+            case "Collaborator":
+                user = new Collaborator(username, Hasher.hash(password), name, email);
+                break;
+            default:
+                return null;
+        }
 
         em.persist(user);
         return user;
     }
 
-    public void changeRole(String username, String role) {
+    public void changeRole(String username, String newRole) {
         User user = find(username);
         if (user == null) return;
-        user.setRole(role);
-        em.merge(user);
+
+        // Se já tem o role correto, não fazer nada
+        String currentRole = org.hibernate.Hibernate.getClass(user).getSimpleName();
+        if (currentRole.equals(newRole)) return;
+
+        // Criar nova instância com o role correto
+        User newUser;
+        switch (newRole) {
+            case "Administrator":
+                newUser = new Administrator(user.getUsername(), user.getPassword(),
+                        user.getName(), user.getEmail());
+                break;
+            case "Responsible":
+                newUser = new Responsible(user.getUsername(), user.getPassword(),
+                        user.getName(), user.getEmail());
+                break;
+            case "Collaborator":
+                newUser = new Collaborator(user.getUsername(), user.getPassword(),
+                        user.getName(), user.getEmail());
+                break;
+            default:
+                return;
+        }
+
+        // Copiar estado adicional
+        newUser.setActive(user.isActive());
+        // subscribedTags será mantido pela relação ManyToMany
+
+        // Remover antigo e persistir novo
+        em.remove(user);
+        em.flush(); // Garantir que remove antes de criar
+        em.persist(newUser);
     }
 
     public void setActive(String username, boolean active) {

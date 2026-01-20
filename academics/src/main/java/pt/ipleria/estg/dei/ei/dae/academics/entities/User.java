@@ -9,6 +9,7 @@ import java.util.List;
 @Entity
 @Table(name = "users")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "DTYPE")
 public class User {
 
     @Id
@@ -24,9 +25,6 @@ public class User {
     @NotBlank
     private String email;
 
-    @NotBlank
-    private String role;   // Administrator | Responsible | Collaborator
-
     private boolean active = true;
 
     @ManyToMany(mappedBy = "subscribedUsers")
@@ -34,12 +32,11 @@ public class User {
 
     public User() {}
 
-    public User(String username, String password, String name, String email, String role) {
+    public User(String username, String password, String name, String email) {
         this.username = username;
         this.password = password;
         this.name = name;
         this.email = email;
-        this.role = role;
         this.active = true;
     }
 
@@ -55,9 +52,6 @@ public class User {
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
 
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }

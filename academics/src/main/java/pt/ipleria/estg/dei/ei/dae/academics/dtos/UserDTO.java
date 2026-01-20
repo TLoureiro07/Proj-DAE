@@ -1,5 +1,6 @@
 package pt.ipleria.estg.dei.ei.dae.academics.dtos;
 
+import org.hibernate.Hibernate;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.User;
 
 public class UserDTO {
@@ -13,7 +14,7 @@ public class UserDTO {
         dto.username = u.getUsername();
         dto.name = u.getName();
         dto.email = u.getEmail();
-        dto.role = u.getRole();
+        dto.role = org.hibernate.Hibernate.getClass(u).getSimpleName();
         return dto;
     }
 }
