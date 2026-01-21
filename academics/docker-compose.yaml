@@ -11,6 +11,7 @@ services:
     image: ghusta/fakesmtp
     ports:
       - "2525:25"
+      - "2501:2500"
   webserver:
     build: .
     ports:

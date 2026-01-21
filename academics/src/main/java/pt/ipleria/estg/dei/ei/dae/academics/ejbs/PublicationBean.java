@@ -55,6 +55,10 @@ public class PublicationBean {
             Hibernate.initialize(p.getTags());
             Hibernate.initialize(p.getOwner());
             Hibernate.initialize(p.getAuthors());
+
+            for (Tag tag : p.getTags()) {
+                Hibernate.initialize(tag.getSubscribedUsers());
+            }
         }
         return p;
     }
@@ -315,4 +319,5 @@ public class PublicationBean {
         }
         return p;
     }
+
 }
