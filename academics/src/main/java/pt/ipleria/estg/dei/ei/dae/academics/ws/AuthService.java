@@ -1,28 +1,23 @@
 package pt.ipleria.estg.dei.ei.dae.academics.ws;
 
 import jakarta.ejb.EJB;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
 import org.hibernate.Hibernate;
-import pt.ipleria.estg.dei.ei.dae.academics.dtos.LoginDTO;
-import pt.ipleria.estg.dei.ei.dae.academics.dtos.RecoverPasswordDTO;
-import pt.ipleria.estg.dei.ei.dae.academics.dtos.ResetPasswordDTO;
+import pt.ipleria.estg.dei.ei.dae.academics.dtos.*;
 import pt.ipleria.estg.dei.ei.dae.academics.ejbs.EmailBean;
 import pt.ipleria.estg.dei.ei.dae.academics.ejbs.PasswordResetBean;
 import pt.ipleria.estg.dei.ei.dae.academics.ejbs.UserBean;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.PasswordResetToken;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.User;
+import pt.ipleria.estg.dei.ei.dae.academics.security.Authenticated;
 import pt.ipleria.estg.dei.ei.dae.academics.security.TokenIssuer;
 
 import java.util.Map;
-
-@Path("auth") // 🔴 SEM SLASH
+@Path("auth")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public class AuthService {
@@ -36,13 +31,16 @@ public class AuthService {
     @EJB
     private EmailBean emailBean;
 
-
     @Context
     private SecurityContext securityContext;
 
+    // =========================
+    // LOGIN
+    // =========================
     @POST
     @Path("login")
     public Response login(LoginDTO dto) {
+
         if (dto == null || dto.username == null || dto.password == null) {
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
@@ -60,6 +58,9 @@ public class AuthService {
         return Response.ok(Map.of("token", token)).build();
     }
 
+    // =========================
+    // RECOVER PASSWORD
+    // =========================
     @POST
     @Path("recover-password")
     public Response recoverPassword(RecoverPasswordDTO dto) {
@@ -68,8 +69,10 @@ public class AuthService {
             return Response.status(Response.Status.BAD_REQUEST).build();
 
         User user = userBean.findByEmail(dto.email);
+
+        // Não revelar se o email existe
         if (user == null)
-            return Response.ok().build(); // não revelar existência
+            return Response.ok().build();
 
         PasswordResetToken token = passwordResetBean.createToken(user);
 
@@ -91,16 +94,12 @@ public class AuthService {
         return Response.ok().build();
     }
 
-
-
+    // =========================
+    // RESET PASSWORD
+    // =========================
     @POST
     @Path("reset-password")
     public Response resetPassword(ResetPasswordDTO dto) {
-    @PATCH
-    @Path("/change-password")
-    @Authenticated
-    public Response changePassword(ChangePasswordDTO dto,
-                                   @Context SecurityContext securityContext) {
 
         if (dto == null ||
                 dto.token == null ||
@@ -133,16 +132,55 @@ public class AuthService {
         ).build();
     }
 
+    // =========================
+    // CHANGE PASSWORD (LOGADO)
+    // =========================
+    @PATCH
+    @Path("change-password")
+    @Authenticated
+    public Response changePassword(ChangePasswordDTO dto,
+                                   @Context SecurityContext securityContext) {
 
+        if (dto == null ||
+                dto.old_password == null ||
+                dto.new_password == null ||
+                dto.confirm_password == null)
+            return Response.status(Response.Status.BAD_REQUEST).build();
+
+        if (!dto.new_password.equals(dto.confirm_password))
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", "Passwords não coincidem"))
+                    .build();
+
+        String username = securityContext.getUserPrincipal().getName();
+
+        if (!userBean.canLogin(username, dto.old_password))
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(Map.of("error", "Password atual incorreta"))
+                    .build();
+
+        userBean.changePassword(username, dto.new_password);
+
+        return Response.ok(
+                Map.of("message", "Password alterada com sucesso")
+        ).build();
+    }
+
+    // =========================
+    // USER INFO
+    // =========================
     @GET
-    @Path("/user")
+    @Path("user")
     @Authenticated
     public Response getAuthenticatedUser() {
+
         String username = securityContext.getUserPrincipal().getName();
         User user = userBean.find(username);
-        if (user == null) {
+
+        if (user == null)
             return Response.status(Response.Status.NOT_FOUND).build();
-        }
+
         return Response.ok(UserDTO.from(user)).build();
     }
 }
+

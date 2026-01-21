@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
+import pt.ipleria.estg.dei.ei.dae.academics.entities.Rating;
 
 @Stateless
 public class PublicationBean {
@@ -141,7 +142,10 @@ public class PublicationBean {
 
     public List<Publication> findVisible(String search, String scientificArea, String tagName, String sortBy, String order) {
         // Construir query dinâmica baseada nos filtros
-        StringBuilder queryBuilder = new StringBuilder("SELECT DISTINCT p FROM Publication p WHERE p.visibility <> 'hidden'");
+        StringBuilder queryBuilder = new StringBuilder(
+                "SELECT p FROM Publication p LEFT JOIN p.comments c " +
+                        "WHERE p.visibility <> 'hidden'"
+        );
         
         if (scientificArea != null && !scientificArea.trim().isEmpty()) {
             queryBuilder.append(" AND LOWER(p.scientificArea) LIKE LOWER(:scientificArea)");
@@ -160,16 +164,23 @@ public class PublicationBean {
         if (sortBy != null && !sortBy.trim().isEmpty()) {
             if ("rating".equalsIgnoreCase(sortBy)) {
                 orderBy = "p.ratingAvg " + ("desc".equalsIgnoreCase(order) ? "DESC" : "ASC");
-            } else if ("comments".equalsIgnoreCase(sortBy)) {
-                orderBy = "(SELECT COUNT(c) FROM Comment c WHERE c.publication = p) " + ("desc".equalsIgnoreCase(order) ? "DESC" : "ASC");
-            } else if ("ratings".equalsIgnoreCase(sortBy)) {
+            } else if ("comments".equalsIgnoreCase(sortBy)
+                    || "commentCount".equalsIgnoreCase(sortBy)) {
+
+                orderBy =
+                        "SUM(CASE WHEN c.hidden = false THEN 1 ELSE 0 END) " +
+                                ("desc".equalsIgnoreCase(order) ? "DESC" : "ASC");
+            }else if ("ratings".equalsIgnoreCase(sortBy)) {
                 orderBy = "(SELECT COUNT(r) FROM Rating r WHERE r.publication = p) " + ("desc".equalsIgnoreCase(order) ? "DESC" : "ASC");
             } else if ("date".equalsIgnoreCase(sortBy)) {
                 orderBy = "p.uploadDate " + ("desc".equalsIgnoreCase(order) ? "DESC" : "ASC");
             }
         }
+        queryBuilder.append(" GROUP BY p");
         queryBuilder.append(" ORDER BY ").append(orderBy);
-        
+
+
+
         jakarta.persistence.TypedQuery<Publication> query = em.createQuery(queryBuilder.toString(), Publication.class);
         
         if (scientificArea != null && !scientificArea.trim().isEmpty()) {
