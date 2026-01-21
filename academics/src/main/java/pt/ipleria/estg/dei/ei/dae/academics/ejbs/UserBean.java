@@ -7,9 +7,13 @@ import jakarta.persistence.PersistenceContext;
 import org.hibernate.Hibernate;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Administrator;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Collaborator;
+import pt.ipleria.estg.dei.ei.dae.academics.entities.Comment;
+import pt.ipleria.estg.dei.ei.dae.academics.entities.Publication;
+import pt.ipleria.estg.dei.ei.dae.academics.entities.Rating;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Responsible;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Tag;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.User;
+import pt.ipleria.estg.dei.ei.dae.academics.entities.UserActivity;
 import pt.ipleria.estg.dei.ei.dae.academics.ejbs.TagBean;
 import pt.ipleria.estg.dei.ei.dae.academics.security.Hasher;
 
@@ -143,41 +147,40 @@ public class UserBean {
         return user.getSubscribedTags();
     }
 
-    public boolean delete(String username) {
+    public void delete(String username) {
         User user = find(username);
-        if (user == null) return false;
-        
-        // Verificar se o utilizador tem publicações, comentários, ratings ou atividades
-        // Se tiver, não podemos eliminar devido a constraints de foreign key
-        long publicationsCount = em.createQuery(
-            "SELECT COUNT(p) FROM Publication p WHERE p.owner.username = :username",
-            Long.class)
+        if (user == null) return;
+
+        // Verificar se o utilizador tem publicações
+        List<Publication> userPublications = em.createQuery(
+            "SELECT p FROM Publication p WHERE p.owner.username = :username", 
+            Publication.class)
             .setParameter("username", username)
-            .getSingleResult();
+            .getResultList();
         
-        if (publicationsCount > 0) {
-            return false; // Não pode eliminar utilizador com publicações
+        if (!userPublications.isEmpty()) {
+            throw new IllegalStateException("Não é possível remover o utilizador porque tem publicações associadas.");
         }
-        
+
         // Remover todas as subscrições de tags antes de remover o utilizador
-        // (a relação ManyToMany será gerida automaticamente pelo JPA)
-        user.getSubscribedTags().clear();
-        
-        // Eliminar comentários e ratings do utilizador (se existirem)
+        List<Tag> subscribedTags = user.getSubscribedTags();
+        for (Tag tag : List.copyOf(subscribedTags)) { // Usar cópia para evitar ConcurrentModificationException
+            user.removeSubscribedTag(tag);
+        }
+        em.flush(); // Sincronizar remoção das relações ManyToMany
+
+        // Remover comentários e ratings do utilizador
         em.createQuery("DELETE FROM Comment c WHERE c.author.username = :username")
-            .setParameter("username", username)
-            .executeUpdate();
-        
+                .setParameter("username", username)
+                .executeUpdate();
         em.createQuery("DELETE FROM Rating r WHERE r.author.username = :username")
-            .setParameter("username", username)
-            .executeUpdate();
-        
-        // Eliminar atividades do utilizador
+                .setParameter("username", username)
+                .executeUpdate();
         em.createQuery("DELETE FROM UserActivity ua WHERE ua.user.username = :username")
-            .setParameter("username", username)
-            .executeUpdate();
-        
+                .setParameter("username", username)
+                .executeUpdate();
+        em.flush(); // Sincronizar remoção das relações OneToMany
+
         em.remove(user);
-        return true;
     }
 }

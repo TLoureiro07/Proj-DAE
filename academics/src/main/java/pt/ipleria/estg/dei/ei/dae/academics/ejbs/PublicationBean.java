@@ -24,6 +24,8 @@ import java.util.UUID;
 
 @Stateless
 public class PublicationBean {
+    private static final String UPLOAD_DIR = "/tmp/uploads"; // Padrão Ficha 9
+
     @PersistenceContext
     private EntityManager em;
 
@@ -55,6 +57,10 @@ public class PublicationBean {
             Hibernate.initialize(p.getTags());
             Hibernate.initialize(p.getOwner());
             Hibernate.initialize(p.getAuthors());
+
+            for (Tag tag : p.getTags()) {
+                Hibernate.initialize(tag.getSubscribedUsers());
+            }
         }
         return p;
     }
@@ -224,10 +230,9 @@ public class PublicationBean {
             p.setTitle(title);
         }
 
-        // Salvar ficheiro no filesystem
+        // Salvar ficheiro no filesystem (padrão Ficha 9)
         String ownerUsernameForPath = owner.getUsername();
-        Path uploadBase = Paths.get(System.getProperty("java.io.tmpdir"), "academics_uploads");
-        Path targetDirectoryPath = uploadBase.resolve(ownerUsernameForPath);
+        Path targetDirectoryPath = Paths.get(UPLOAD_DIR, ownerUsernameForPath);
         if (!Files.exists(targetDirectoryPath)) {
             Files.createDirectories(targetDirectoryPath);
         }
@@ -252,8 +257,8 @@ public class PublicationBean {
 
         String ownerUsername = p.getOwner() != null ? p.getOwner().getUsername() : "unknown";
 
-        Path uploadBase = Paths.get(System.getProperty("java.io.tmpdir"), "academics_uploads");
-        Path targetDirectoryPath = uploadBase.resolve(ownerUsername);
+        // Salvar ficheiro no filesystem (padrão Ficha 9)
+        Path targetDirectoryPath = Paths.get(UPLOAD_DIR, ownerUsername);
         if (!Files.exists(targetDirectoryPath)) {
             Files.createDirectories(targetDirectoryPath);
         }
@@ -315,4 +320,5 @@ public class PublicationBean {
         }
         return p;
     }
+
 }

@@ -10,6 +10,8 @@ import jakarta.ws.rs.core.Context;
 
 import pt.ipleria.estg.dei.ei.dae.academics.dtos.CreateUserDTO;
 import pt.ipleria.estg.dei.ei.dae.academics.dtos.UserDTO;
+import pt.ipleria.estg.dei.ei.dae.academics.dtos.SetActiveDTO;
+import pt.ipleria.estg.dei.ei.dae.academics.dtos.UpdateProfileDTO;
 import pt.ipleria.estg.dei.ei.dae.academics.ejbs.UserBean;
 import pt.ipleria.estg.dei.ei.dae.academics.ejbs.PublicationBean;
 import pt.ipleria.estg.dei.ei.dae.academics.ejbs.UserActivityBean;
@@ -107,29 +109,8 @@ public class UserService {
     @Authenticated
     @RolesAllowed({"Administrator"})
     public Response setActive(@PathParam("username") String username,
-                              Map<String, Object> body) {
-        if (body == null || !body.containsKey("active")) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                .entity(Map.of("error", "Campo 'active' é obrigatório"))
-                .build();
-        }
-
-        // Converter o valor para boolean (pode vir como Boolean, String, ou Number)
-        Object activeObj = body.get("active");
-        boolean active;
-        if (activeObj instanceof Boolean) {
-            active = (Boolean) activeObj;
-        } else if (activeObj instanceof String) {
-            active = Boolean.parseBoolean((String) activeObj);
-        } else if (activeObj instanceof Number) {
-            active = ((Number) activeObj).intValue() != 0;
-        } else {
-            return Response.status(Response.Status.BAD_REQUEST)
-                .entity(Map.of("error", "Campo 'active' deve ser um boolean"))
-                .build();
-        }
-
-        userBean.setActive(username, active);
+                              SetActiveDTO dto) {
+        userBean.setActive(username, dto.active);
         User user = userBean.find(username);
         if (user == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
@@ -143,7 +124,7 @@ public class UserService {
     @Path("/{username}")
     @Authenticated
     public Response updateProfile(@PathParam("username") String username,
-                                  Map<String, Object> body,
+                                  UpdateProfileDTO dto,
                                   @Context SecurityContext sc) {
         String currentUser = sc != null && sc.getUserPrincipal() != null ?
             sc.getUserPrincipal().getName() : null;
@@ -159,22 +140,11 @@ public class UserService {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
-        boolean updated = false;
-        if (body != null) {
-            if (body.containsKey("name") && body.get("name") != null) {
-                user.setName(body.get("name").toString());
-                updated = true;
-            }
-            if (body.containsKey("email") && body.get("email") != null) {
-                user.setEmail(body.get("email").toString());
-                updated = true;
-            }
+        if (dto.name != null) {
+            user.setName(dto.name);
         }
-
-        if (!updated) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                .entity(Map.of("error", "Nenhum campo válido para atualizar"))
-                .build();
+        if (dto.email != null) {
+            user.setEmail(dto.email);
         }
 
         userBean.update(user);
@@ -222,7 +192,7 @@ public class UserService {
         } catch (Exception e) {
             e.printStackTrace();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(Map.of("error", "Erro ao carregar publicações: " + e.getMessage()))
+                .entity("Erro ao carregar publicações: " + e.getMessage())
                 .build();
         }
     }
@@ -298,7 +268,7 @@ public class UserService {
         } catch (Exception e) {
             e.printStackTrace();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(Map.of("error", "Erro ao carregar subscrições: " + e.getMessage()))
+                .entity("Erro ao carregar subscrições: " + e.getMessage())
                 .build();
         }
     }
@@ -322,7 +292,7 @@ public class UserService {
         userActivityBean.recordActivity(username, null, "TAG_SUBSCRIPTION", 
             "Subscreveu tag ID: " + tagId);
 
-        return Response.ok(Map.of("message", "Subscrição realizada com sucesso")).build();
+        return Response.ok("Subscrição realizada com sucesso").build();
     }
 
     @DELETE
@@ -342,26 +312,19 @@ public class UserService {
         return Response.noContent().build();
     }
 
-    // Eliminar utilizador (apenas Administrator)
+    // Remover utilizador (apenas Administrator)
     @DELETE
     @Path("/{username}")
     @Authenticated
     @RolesAllowed({"Administrator"})
-    public Response delete(@PathParam("username") String username) {
-        User user = userBean.find(username);
-        if (user == null) {
-            return Response.status(Response.Status.NOT_FOUND)
-                .entity(Map.of("error", "Utilizador não encontrado"))
-                .build();
-        }
-
-        boolean deleted = userBean.delete(username);
-        if (!deleted) {
+    public Response deleteUser(@PathParam("username") String username) {
+        try {
+            userBean.delete(username);
+            return Response.noContent().build();
+        } catch (IllegalStateException e) {
             return Response.status(Response.Status.CONFLICT)
-                .entity(Map.of("error", "Não é possível eliminar utilizador com publicações associadas"))
+                .entity(e.getMessage())
                 .build();
         }
-
-        return Response.noContent().build();
     }
 }

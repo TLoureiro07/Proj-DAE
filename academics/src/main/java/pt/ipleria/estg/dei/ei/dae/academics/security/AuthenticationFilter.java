@@ -45,11 +45,6 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         if (user == null) {
             throw new NotAuthorizedException("Invalid user for token");
         }
-        
-        // Verificar se o utilizador está ativo
-        if (!user.isActive()) {
-            throw new NotAuthorizedException("User account is inactive");
-        }
 
         requestContext.setSecurityContext(new SecurityContext() {
             @Override

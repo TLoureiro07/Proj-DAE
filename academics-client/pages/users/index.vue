@@ -255,7 +255,7 @@ async function toggleActive(username, active) {
         'Authorization': `Bearer ${token.value}`,
         'Content-Type': 'application/json'
       },
-      body: { active }
+      body: { active: active }
     })
     const user = users.value.find(u => u.username === username)
     if (user) user.active = active
@@ -310,7 +310,15 @@ async function deleteUser(username) {
     users.value = users.value.filter(u => u.username !== username)
     alert('Utilizador removido com sucesso!')
   } catch (e) {
-    alert('Erro ao remover utilizador: ' + (e.message || 'Erro desconhecido'))
+    let errorMsg = 'Erro ao remover utilizador'
+    if (e.data?.error) {
+      errorMsg += ': ' + e.data.error
+    } else if (e.response?._data?.error) {
+      errorMsg += ': ' + e.response._data.error
+    } else if (e.message) {
+      errorMsg += ': ' + e.message
+    }
+    alert(errorMsg)
   } finally {
     updating.value = false
   }

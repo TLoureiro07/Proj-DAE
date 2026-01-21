@@ -43,6 +43,16 @@
             </span>
           </span>
         </p>
+        <p v-if="publication.fileName" style="margin: 15px 0;">
+          <strong>Ficheiro:</strong> 
+          <button 
+            @click="downloadFile"
+            class="btn btn-primary btn-small"
+            :disabled="downloading"
+          >
+            📥 Descarregar {{ publication.fileName }}
+          </button>
+        </p>
         <p><small>Data de upload: {{ formatDate(publication.uploadDate) }}</small></p>
       </div>
 
@@ -390,3 +400,4 @@ onMounted(() => {
   cursor: not-allowed;
 }
 </style>
+
