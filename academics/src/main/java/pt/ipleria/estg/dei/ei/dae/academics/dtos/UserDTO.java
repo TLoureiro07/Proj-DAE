@@ -8,6 +8,7 @@ public class UserDTO {
     public String name;
     public String email;
     public String role;
+    public boolean active;
 
     public static UserDTO from(User u) {
         UserDTO dto = new UserDTO();
@@ -15,6 +16,7 @@ public class UserDTO {
         dto.name = u.getName();
         dto.email = u.getEmail();
         dto.role = org.hibernate.Hibernate.getClass(u).getSimpleName();
+        dto.active = u.isActive();
         return dto;
     }
 }
