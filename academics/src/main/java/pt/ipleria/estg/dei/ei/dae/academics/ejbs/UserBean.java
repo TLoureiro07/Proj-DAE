@@ -3,6 +3,7 @@ package pt.ipleria.estg.dei.ei.dae.academics.ejbs;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import org.hibernate.Hibernate;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Administrator;
@@ -138,4 +139,17 @@ public class UserBean {
         Hibernate.initialize(user.getSubscribedTags());
         return user.getSubscribedTags();
     }
+
+    public User findByEmail(String email) {
+        try {
+            return em.createQuery(
+                            "SELECT u FROM User u WHERE u.email = :email",
+                            User.class
+                    ).setParameter("email", email)
+                    .getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
 }
