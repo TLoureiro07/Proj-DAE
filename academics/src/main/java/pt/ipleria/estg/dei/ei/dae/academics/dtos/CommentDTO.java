@@ -3,15 +3,17 @@ package pt.ipleria.estg.dei.ei.dae.academics.dtos;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Comment;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.User;
 
-import java.time.LocalDateTime;
+import java.io.Serializable;
+import java.util.List;
+import java.util.stream.Collectors;
 
-public class CommentDTO {
+public class CommentDTO implements Serializable {
     public Long id;
     public String text;
     public String authorUsername;
     public String authorName;
     public Long publicationId;
-    public String commentDate;  // Convertido para String para serialização JSON
+    public String commentDate;
     public boolean hidden;
 
     public CommentDTO() {}
@@ -38,6 +40,10 @@ public class CommentDTO {
             comment.getCommentDate() != null ? comment.getCommentDate().toString() : null,
             comment.isHidden()
         );
+    }
+
+    public static List<CommentDTO> from(List<Comment> comments) {
+        return comments.stream().map(CommentDTO::from).collect(Collectors.toList());
     }
 }
 

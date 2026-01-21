@@ -96,6 +96,11 @@ public class AuthService {
     @POST
     @Path("reset-password")
     public Response resetPassword(ResetPasswordDTO dto) {
+    @PATCH
+    @Path("/change-password")
+    @Authenticated
+    public Response changePassword(ChangePasswordDTO dto,
+                                   @Context SecurityContext securityContext) {
 
         if (dto == null ||
                 dto.token == null ||
@@ -129,4 +134,15 @@ public class AuthService {
     }
 
 
+    @GET
+    @Path("/user")
+    @Authenticated
+    public Response getAuthenticatedUser() {
+        String username = securityContext.getUserPrincipal().getName();
+        User user = userBean.find(username);
+        if (user == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        return Response.ok(UserDTO.from(user)).build();
+    }
 }

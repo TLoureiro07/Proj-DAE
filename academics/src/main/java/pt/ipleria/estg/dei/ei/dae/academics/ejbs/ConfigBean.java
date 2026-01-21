@@ -67,26 +67,24 @@ public class ConfigBean {
             System.out.println("Created tag: Projeto Y");
         }
 
-        // Criar publicação de teste (comentado para evitar problemas durante @PostConstruct)
-        // As publicações podem ser criadas via API depois do deployment
         /*
         if (collaborator != null && publicationBean.findByOwner("collaborator").size() == 0) {
             try {
-                Publication testPub = new Publication();
-                testPub.setTitle("Deep Learning Applications in Medical Imaging");
-                testPub.setAuthors(Arrays.asList("João Silva", "Maria Santos", "Pedro Costa"));
-                testPub.setScientificArea("Ciência de Dados");
-                testPub.setSummary("Este artigo explora as aplicações de deep learning no processamento de imagens médicas, apresentando técnicas avançadas de redes neurais convolucionais para diagnóstico assistido por computador.");
-                testPub.setVisibility("public");
-                
-                Publication created = publicationBean.create("collaborator", testPub);
-                if (created != null && tagProjetoX != null) {
-                    publicationBean.addTag(created.getId(), tagProjetoX.getId());
-                    System.out.println("Created test publication: " + created.getTitle());
-                }
+            Publication testPub = new Publication();
+            testPub.setTitle("Deep Learning Applications in Medical Imaging");
+            testPub.setAuthors(Arrays.asList("João Silva", "Maria Santos", "Pedro Costa"));
+            testPub.setScientificArea("Ciência de Dados");
+            testPub.setSummary("Este artigo explora as aplicações de deep learning no processamento de imagens médicas, apresentando técnicas avançadas de redes neurais convolucionais para diagnóstico assistido por computador.");
+            testPub.setVisibility("public");
+            
+            Publication created = publicationBean.create("collaborator", testPub);
+            if (created != null && tagProjetoX != null) {
+                publicationBean.addTag(created.getId(), tagProjetoX.getId());
+                System.out.println("Created test publication: " + created.getTitle());
+            }
             } catch (Exception e) {
                 System.out.println("Warning: Could not create test publication: " + e.getMessage());
-            }
+        }
         }
         */
     }

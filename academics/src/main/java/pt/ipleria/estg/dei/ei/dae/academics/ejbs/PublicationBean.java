@@ -24,6 +24,8 @@ import java.util.UUID;
 
 @Stateless
 public class PublicationBean {
+    private static final String UPLOAD_DIR = "/tmp/uploads";
+
     @PersistenceContext
     private EntityManager em;
 
@@ -47,22 +49,22 @@ public class PublicationBean {
         return em.find(Publication.class, id);
     }
 
-    // Método para encontrar publicação com relações lazy inicializadas (para DTOs)
     public Publication findWithRelations(Long id) {
         Publication p = em.find(Publication.class, id);
         if (p != null) {
-            // Inicializar relações lazy antes de fechar a sessão
             Hibernate.initialize(p.getTags());
             Hibernate.initialize(p.getOwner());
             Hibernate.initialize(p.getAuthors());
+
+            for (Tag tag : p.getTags()) {
+                Hibernate.initialize(tag.getSubscribedUsers());
+            }
         }
         return p;
     }
 
-    // Método para encontrar publicações com relações lazy inicializadas
     public List<Publication> findVisibleWithRelations(String search, String scientificArea, String tagName, String sortBy, String order) {
         List<Publication> publications = findVisible(search, scientificArea, tagName, sortBy, order);
-        // Inicializar relações lazy para cada publicação
         for (Publication p : publications) {
             Hibernate.initialize(p.getTags());
             Hibernate.initialize(p.getOwner());
@@ -71,10 +73,8 @@ public class PublicationBean {
         return publications;
     }
 
-    // Método para encontrar publicações por owner com relações lazy inicializadas
     public List<Publication> findByOwnerWithRelations(String ownerUsername) {
         List<Publication> publications = findByOwner(ownerUsername);
-        // Inicializar relações lazy para cada publicação
         for (Publication p : publications) {
             Hibernate.initialize(p.getTags());
             Hibernate.initialize(p.getOwner());
@@ -202,20 +202,16 @@ public class PublicationBean {
         return p;
     }
 
-    // Upload: cria publicação diretamente com o ficheiro (padrão Ficha 9)
     public Publication upload(String ownerUsername, String fileName, InputStream stream) throws IOException {
         User owner = userBean.find(ownerUsername);
         if (owner == null) return null;
 
-        // Criar nova publicação
         Publication p = new Publication();
         p.setOwner(owner);
         p.setUploadDate(LocalDate.now());
         p.setLastEdited(LocalDateTime.now());
-        p.setVisibility("internal"); // default
-        // Título pode ser extraído do nome do ficheiro ou gerado depois
+        p.setVisibility("internal");
         if (fileName != null && !fileName.isEmpty()) {
-            // Remover extensão para usar como título inicial
             String title = fileName;
             int lastDot = fileName.lastIndexOf('.');
             if (lastDot > 0) {
@@ -224,10 +220,8 @@ public class PublicationBean {
             p.setTitle(title);
         }
 
-        // Salvar ficheiro no filesystem
         String ownerUsernameForPath = owner.getUsername();
-        Path uploadBase = Paths.get(System.getProperty("java.io.tmpdir"), "academics_uploads");
-        Path targetDirectoryPath = uploadBase.resolve(ownerUsernameForPath);
+        Path targetDirectoryPath = Paths.get(UPLOAD_DIR, ownerUsernameForPath);
         if (!Files.exists(targetDirectoryPath)) {
             Files.createDirectories(targetDirectoryPath);
         }
@@ -243,7 +237,6 @@ public class PublicationBean {
         return p;
     }
 
-    // Método para atualizar ficheiro de publicação existente (se necessário)
     public Publication updateFile(Long id, InputStream stream, String fileName, String editedByUsername) throws IOException {
         Publication p = find(id);
         if (p == null) return null;
@@ -252,8 +245,7 @@ public class PublicationBean {
 
         String ownerUsername = p.getOwner() != null ? p.getOwner().getUsername() : "unknown";
 
-        Path uploadBase = Paths.get(System.getProperty("java.io.tmpdir"), "academics_uploads");
-        Path targetDirectoryPath = uploadBase.resolve(ownerUsername);
+        Path targetDirectoryPath = Paths.get(UPLOAD_DIR, ownerUsername);
         if (!Files.exists(targetDirectoryPath)) {
             Files.createDirectories(targetDirectoryPath);
         }
@@ -261,7 +253,6 @@ public class PublicationBean {
         Path targetFilePath = targetDirectoryPath.resolve("file_" + UUID.randomUUID());
         Files.copy(stream, targetFilePath, StandardCopyOption.REPLACE_EXISTING);
 
-        // Remover ficheiro antigo se existir
         if (p.getFilePath() != null) {
             try {
                 Path oldPath = Paths.get(p.getFilePath());
@@ -315,4 +306,5 @@ public class PublicationBean {
         }
         return p;
     }
+
 }

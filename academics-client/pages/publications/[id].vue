@@ -3,10 +3,25 @@
     <div v-if="loading">A carregar...</div>
     <div v-else-if="error">{{ error }}</div>
     <div v-else-if="publication">
-      <h1>{{ publication.title || 'Sem título' }}</h1>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h1>{{ publication.title || 'Sem título' }}</h1>
+        <div v-if="isResponsible" style="display: flex; gap: 0.5rem;">
+          <button 
+            @click="togglePublicationVisibility" 
+            class="btn btn-small"
+            :class="publication.visibility === 'hidden' ? 'btn-success' : 'btn-warning'"
+            :disabled="updatingVisibility"
+          >
+            {{ publication.visibility === 'hidden' ? 'Mostrar Publicação' : 'Ocultar Publicação' }}
+          </button>
+        </div>
+      </div>
       
       <div style="margin: 20px 0;">
         <p><strong>Autor:</strong> {{ publication.owner }}</p>
+        <p v-if="publication.visibility === 'hidden'" style="color: red; font-weight: bold;">
+          [Publicação Ocultada]
+        </p>
         <p v-if="publication.summary"><strong>Resumo:</strong> {{ publication.summary }}</p>
         <p v-if="publication.ratingAvg !== null && publication.ratingAvg !== undefined">
           <strong>Rating médio:</strong> {{ publication.ratingAvg.toFixed(1) }} estrelas ({{ ratings.length }} avaliações)
@@ -14,8 +29,29 @@
         <p v-if="publication.tags && publication.tags.length > 0">
           <strong>Tags:</strong>
           <span v-for="tag in publication.tags" :key="tag.id" style="margin-right: 5px;">
-            <span style="background: #e0e0e0; padding: 2px 8px; border-radius: 3px;">{{ tag.name }}</span>
+            <span style="background: #e0e0e0; padding: 2px 8px; border-radius: 3px;">
+              {{ tag.name }}
+              <button 
+                v-if="isResponsible"
+                @click="removeTag(tag.id)"
+                style="margin-left: 5px; background: #dc3545; color: white; border: none; border-radius: 3px; padding: 2px 6px; cursor: pointer; font-size: 0.8em;"
+                :disabled="removingTag"
+                title="Desassociar tag"
+              >
+                ×
+              </button>
+            </span>
           </span>
+        </p>
+        <p v-if="publication.fileName" style="margin: 15px 0;">
+          <strong>Ficheiro:</strong> 
+          <button 
+            @click="downloadFile"
+            class="btn btn-primary btn-small"
+            :disabled="downloading"
+          >
+            📥 Descarregar {{ publication.fileName }}
+          </button>
         </p>
         <p><small>Data de upload: {{ formatDate(publication.uploadDate) }}</small></p>
       </div>
@@ -52,11 +88,26 @@
           <div v-for="comment in comments" :key="comment.id" 
                style="border-top: 1px solid #eee; padding: 10px 0;"
                :style="comment.hidden ? 'opacity: 0.5;' : ''">
-            <p><strong>{{ comment.authorName }}</strong> 
-               <small>{{ formatDateTime(comment.commentDate) }}</small>
-               <span v-if="comment.hidden" style="color: red;">[Oculto]</span>
-            </p>
-            <p>{{ comment.text }}</p>
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+              <div style="flex: 1;">
+                <p><strong>{{ comment.authorName }}</strong> 
+                   <small>{{ formatDateTime(comment.commentDate) }}</small>
+                   <span v-if="comment.hidden" style="color: red; margin-left: 10px;">[Oculto]</span>
+                </p>
+                <p>{{ comment.text }}</p>
+              </div>
+              <div v-if="isResponsible" style="margin-left: 10px;">
+                <button 
+                  @click="toggleCommentHidden(comment.id, !comment.hidden)"
+                  class="btn btn-small"
+                  :class="comment.hidden ? 'btn-success' : 'btn-warning'"
+                  :disabled="togglingComment"
+                  style="font-size: 0.85em; padding: 0.3rem 0.6rem;"
+                >
+                  {{ comment.hidden ? 'Mostrar' : 'Ocultar' }}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -97,9 +148,16 @@ const ratings = ref([])
 const loading = ref(true)
 const error = ref(null)
 const submitting = ref(false)
+const updatingVisibility = ref(false)
+const removingTag = ref(false)
+const togglingComment = ref(false)
 
 const newComment = ref({ text: '' })
 const newRating = ref({ value: 5 })
+
+const isResponsible = computed(() => 
+  user.value?.role === 'Responsible' || user.value?.role === 'Administrator'
+)
 
 async function loadPublication() {
   loading.value = true
@@ -229,6 +287,71 @@ function formatDateTime(dateString) {
   }
 }
 
+async function togglePublicationVisibility() {
+  if (!isResponsible.value) return
+  
+  updatingVisibility.value = true
+  try {
+    const newVisibility = publication.value.visibility === 'hidden' ? 'public' : 'hidden'
+    await $fetch(`${api}/publications/${publicationId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token.value}`,
+        'Content-Type': 'application/json'
+      },
+      body: { visibility: newVisibility }
+    })
+    await loadPublication()
+    alert(`Publicação ${newVisibility === 'hidden' ? 'ocultada' : 'mostrada'} com sucesso!`)
+  } catch (e) {
+    alert('Erro ao alterar visibilidade: ' + (e.message || 'Erro desconhecido'))
+  } finally {
+    updatingVisibility.value = false
+  }
+}
+
+async function removeTag(tagId) {
+  if (!isResponsible.value) return
+  if (!confirm('Tens a certeza que queres desassociar esta tag da publicação?')) return
+  
+  removingTag.value = true
+  try {
+    await $fetch(`${api}/publications/${publicationId}/tags/${tagId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token.value}`
+      }
+    })
+    await loadPublication()
+    alert('Tag desassociada com sucesso!')
+  } catch (e) {
+    alert('Erro ao desassociar tag: ' + (e.message || 'Erro desconhecido'))
+  } finally {
+    removingTag.value = false
+  }
+}
+
+async function toggleCommentHidden(commentId, newHiddenState) {
+  if (!isResponsible.value) return
+  
+  togglingComment.value = true
+  try {
+    await $fetch(`${api}/publications/${publicationId}/comments/${commentId}/hidden`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token.value}`,
+        'Content-Type': 'application/json'
+      },
+      body: { hidden: newHiddenState }
+    })
+    await loadComments()
+  } catch (e) {
+    alert('Erro ao alterar estado do comentário: ' + (e.message || 'Erro desconhecido'))
+  } finally {
+    togglingComment.value = false
+  }
+}
+
 onMounted(() => {
   if (token.value) {
     loadPublication()
@@ -237,4 +360,44 @@ onMounted(() => {
   }
 })
 </script>
+
+<style scoped>
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+  font-size: 1rem;
+}
+
+.btn-small {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+}
+
+.btn-success {
+  background: #28a745;
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #218838;
+}
+
+.btn-warning {
+  background: #ffc107;
+  color: #333;
+}
+
+.btn-warning:hover:not(:disabled) {
+  background: #e0a800;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+</style>
 

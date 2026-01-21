@@ -10,6 +10,8 @@ import jakarta.ws.rs.core.Context;
 
 import pt.ipleria.estg.dei.ei.dae.academics.dtos.CreateUserDTO;
 import pt.ipleria.estg.dei.ei.dae.academics.dtos.UserDTO;
+import pt.ipleria.estg.dei.ei.dae.academics.dtos.SetActiveDTO;
+import pt.ipleria.estg.dei.ei.dae.academics.dtos.UpdateProfileDTO;
 import pt.ipleria.estg.dei.ei.dae.academics.ejbs.UserBean;
 import pt.ipleria.estg.dei.ei.dae.academics.ejbs.PublicationBean;
 import pt.ipleria.estg.dei.ei.dae.academics.ejbs.UserActivityBean;
@@ -101,19 +103,52 @@ public class UserService {
                 .build();
     }
 
-    // EP07 — ativar / suspender
+    // EP07 — ativar / suspender (apenas Administrator)
     @PATCH
-    @Path("/{username}")
+    @Path("/{username}/active")
     @Authenticated
     @RolesAllowed({"Administrator"})
     public Response setActive(@PathParam("username") String username,
-                              String body) {
+                              SetActiveDTO dto) {
+        userBean.setActive(username, dto.active);
+        User user = userBean.find(username);
+        if (user == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
 
-        boolean active = body.contains("active");
-        userBean.setActive(username, active);
+        return Response.ok(UserDTO.from(user)).build();
+    }
 
-        return Response.ok("{\"username\":\"" + username + "\"}")
-                .build();
+    // Editar dados pessoais (nome e email) - próprio utilizador ou Administrator
+    @PATCH
+    @Path("/{username}")
+    @Authenticated
+    public Response updateProfile(@PathParam("username") String username,
+                                  UpdateProfileDTO dto,
+                                  @Context SecurityContext sc) {
+        String currentUser = sc != null && sc.getUserPrincipal() != null ?
+            sc.getUserPrincipal().getName() : null;
+        
+        // Só pode editar o próprio perfil, ou se for Administrator
+        if (currentUser == null || 
+            (!currentUser.equals(username) && !sc.isUserInRole("Administrator"))) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        }
+
+        User user = userBean.find(username);
+        if (user == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        if (dto.name != null) {
+            user.setName(dto.name);
+        }
+        if (dto.email != null) {
+            user.setEmail(dto.email);
+        }
+
+        userBean.update(user);
+        return Response.ok(UserDTO.from(user)).build();
     }
 
     // EP08 — listar publicações de um utilizador
@@ -157,7 +192,7 @@ public class UserService {
         } catch (Exception e) {
             e.printStackTrace();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(Map.of("error", "Erro ao carregar publicações: " + e.getMessage()))
+                .entity("Erro ao carregar publicações: " + e.getMessage())
                 .build();
         }
     }
@@ -233,7 +268,7 @@ public class UserService {
         } catch (Exception e) {
             e.printStackTrace();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(Map.of("error", "Erro ao carregar subscrições: " + e.getMessage()))
+                .entity("Erro ao carregar subscrições: " + e.getMessage())
                 .build();
         }
     }
@@ -257,7 +292,7 @@ public class UserService {
         userActivityBean.recordActivity(username, null, "TAG_SUBSCRIPTION", 
             "Subscreveu tag ID: " + tagId);
 
-        return Response.ok(Map.of("message", "Subscrição realizada com sucesso")).build();
+        return Response.ok("Subscrição realizada com sucesso").build();
     }
 
     @DELETE
@@ -275,5 +310,21 @@ public class UserService {
 
         userBean.unsubscribeFromTag(username, tagId);
         return Response.noContent().build();
+    }
+
+    // Remover utilizador (apenas Administrator)
+    @DELETE
+    @Path("/{username}")
+    @Authenticated
+    @RolesAllowed({"Administrator"})
+    public Response deleteUser(@PathParam("username") String username) {
+        try {
+            userBean.delete(username);
+            return Response.noContent().build();
+        } catch (IllegalStateException e) {
+            return Response.status(Response.Status.CONFLICT)
+                .entity(e.getMessage())
+                .build();
+        }
     }
 }
