@@ -101,19 +101,84 @@ public class UserService {
                 .build();
     }
 
-    // EP07 — ativar / suspender
+    // EP07 — ativar / suspender (apenas Administrator)
     @PATCH
-    @Path("/{username}")
+    @Path("/{username}/active")
     @Authenticated
     @RolesAllowed({"Administrator"})
     public Response setActive(@PathParam("username") String username,
-                              String body) {
-
-        boolean active = body.contains("active");
-        userBean.setActive(username, active);
-
-        return Response.ok("{\"username\":\"" + username + "\"}")
+                              Map<String, Object> body) {
+        if (body == null || !body.containsKey("active")) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity(Map.of("error", "Campo 'active' é obrigatório"))
                 .build();
+        }
+
+        // Converter o valor para boolean (pode vir como Boolean, String, ou Number)
+        Object activeObj = body.get("active");
+        boolean active;
+        if (activeObj instanceof Boolean) {
+            active = (Boolean) activeObj;
+        } else if (activeObj instanceof String) {
+            active = Boolean.parseBoolean((String) activeObj);
+        } else if (activeObj instanceof Number) {
+            active = ((Number) activeObj).intValue() != 0;
+        } else {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity(Map.of("error", "Campo 'active' deve ser um boolean"))
+                .build();
+        }
+
+        userBean.setActive(username, active);
+        User user = userBean.find(username);
+        if (user == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        return Response.ok(UserDTO.from(user)).build();
+    }
+
+    // Editar dados pessoais (nome e email) - próprio utilizador ou Administrator
+    @PATCH
+    @Path("/{username}")
+    @Authenticated
+    public Response updateProfile(@PathParam("username") String username,
+                                  Map<String, Object> body,
+                                  @Context SecurityContext sc) {
+        String currentUser = sc != null && sc.getUserPrincipal() != null ?
+            sc.getUserPrincipal().getName() : null;
+        
+        // Só pode editar o próprio perfil, ou se for Administrator
+        if (currentUser == null || 
+            (!currentUser.equals(username) && !sc.isUserInRole("Administrator"))) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        }
+
+        User user = userBean.find(username);
+        if (user == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        boolean updated = false;
+        if (body != null) {
+            if (body.containsKey("name") && body.get("name") != null) {
+                user.setName(body.get("name").toString());
+                updated = true;
+            }
+            if (body.containsKey("email") && body.get("email") != null) {
+                user.setEmail(body.get("email").toString());
+                updated = true;
+            }
+        }
+
+        if (!updated) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity(Map.of("error", "Nenhum campo válido para atualizar"))
+                .build();
+        }
+
+        userBean.update(user);
+        return Response.ok(UserDTO.from(user)).build();
     }
 
     // EP08 — listar publicações de um utilizador
@@ -274,6 +339,29 @@ public class UserService {
         }
 
         userBean.unsubscribeFromTag(username, tagId);
+        return Response.noContent().build();
+    }
+
+    // Eliminar utilizador (apenas Administrator)
+    @DELETE
+    @Path("/{username}")
+    @Authenticated
+    @RolesAllowed({"Administrator"})
+    public Response delete(@PathParam("username") String username) {
+        User user = userBean.find(username);
+        if (user == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                .entity(Map.of("error", "Utilizador não encontrado"))
+                .build();
+        }
+
+        boolean deleted = userBean.delete(username);
+        if (!deleted) {
+            return Response.status(Response.Status.CONFLICT)
+                .entity(Map.of("error", "Não é possível eliminar utilizador com publicações associadas"))
+                .build();
+        }
+
         return Response.noContent().build();
     }
 }

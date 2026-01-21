@@ -99,6 +99,10 @@ public class UserBean {
         em.merge(user);
     }
 
+    public void update(User user) {
+        em.merge(user);
+    }
+
     public boolean canLogin(String username, String password) {
         User user = find(username);
         if (user == null) return false;
@@ -137,5 +141,43 @@ public class UserBean {
         // Inicializar relação lazy antes de retornar
         Hibernate.initialize(user.getSubscribedTags());
         return user.getSubscribedTags();
+    }
+
+    public boolean delete(String username) {
+        User user = find(username);
+        if (user == null) return false;
+        
+        // Verificar se o utilizador tem publicações, comentários, ratings ou atividades
+        // Se tiver, não podemos eliminar devido a constraints de foreign key
+        long publicationsCount = em.createQuery(
+            "SELECT COUNT(p) FROM Publication p WHERE p.owner.username = :username",
+            Long.class)
+            .setParameter("username", username)
+            .getSingleResult();
+        
+        if (publicationsCount > 0) {
+            return false; // Não pode eliminar utilizador com publicações
+        }
+        
+        // Remover todas as subscrições de tags antes de remover o utilizador
+        // (a relação ManyToMany será gerida automaticamente pelo JPA)
+        user.getSubscribedTags().clear();
+        
+        // Eliminar comentários e ratings do utilizador (se existirem)
+        em.createQuery("DELETE FROM Comment c WHERE c.author.username = :username")
+            .setParameter("username", username)
+            .executeUpdate();
+        
+        em.createQuery("DELETE FROM Rating r WHERE r.author.username = :username")
+            .setParameter("username", username)
+            .executeUpdate();
+        
+        // Eliminar atividades do utilizador
+        em.createQuery("DELETE FROM UserActivity ua WHERE ua.user.username = :username")
+            .setParameter("username", username)
+            .executeUpdate();
+        
+        em.remove(user);
+        return true;
     }
 }

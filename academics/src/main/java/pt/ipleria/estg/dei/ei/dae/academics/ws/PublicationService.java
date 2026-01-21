@@ -212,6 +212,18 @@ public class PublicationService {
         }
 
         if (body.containsKey("visibility") && body.get("visibility") != null) {
+            // Apenas Responsible/Administrator podem alterar visibilidade
+            try {
+                if (!sc.isUserInRole("Responsible") && !sc.isUserInRole("Administrator")) {
+                    return Response.status(Response.Status.FORBIDDEN)
+                        .entity(Map.of("error", "Apenas Responsible/Administrator podem alterar visibilidade"))
+                        .build();
+                }
+            } catch (Exception e) {
+                return Response.status(Response.Status.FORBIDDEN)
+                    .entity(Map.of("error", "Não tens permissão para alterar visibilidade"))
+                    .build();
+            }
             p = publicationBean.updateVisibility(id, body.get("visibility").toString(), editor);
             updated = true;
         }
