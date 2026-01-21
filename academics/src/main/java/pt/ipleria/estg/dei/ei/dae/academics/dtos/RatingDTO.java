@@ -3,15 +3,17 @@ package pt.ipleria.estg.dei.ei.dae.academics.dtos;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Rating;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.User;
 
-import java.time.LocalDateTime;
+import java.io.Serializable;
+import java.util.List;
+import java.util.stream.Collectors;
 
-public class RatingDTO {
+public class RatingDTO implements Serializable {
     public Long id;
     public Integer value;
     public String authorUsername;
     public String authorName;
     public Long publicationId;
-    public String ratingDate;  // Convertido para String para serialização JSON
+    public String ratingDate;
 
     public RatingDTO() {}
 
@@ -35,6 +37,10 @@ public class RatingDTO {
             rating.getPublication() != null ? rating.getPublication().getId() : null,
             rating.getRatingDate() != null ? rating.getRatingDate().toString() : null
         );
+    }
+
+    public static List<RatingDTO> from(List<Rating> ratings) {
+        return ratings.stream().map(RatingDTO::from).collect(Collectors.toList());
     }
 }
 

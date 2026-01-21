@@ -29,9 +29,6 @@ public class AuthService {
     @Context
     private SecurityContext securityContext;
 
-    /**
-     * EP02 — Login
-     */
     @POST
     @Path("/login")
     public Response login(LoginDTO dto) {
@@ -57,9 +54,6 @@ public class AuthService {
         return Response.ok(Map.of("token", token)).build();
     }
 
-    /**
-     * EP03 — Alterar palavra-passe
-     */
     @PATCH
     @Path("/change-password")
     @Authenticated
@@ -97,9 +91,6 @@ public class AuthService {
         ).build();
     }
 
-    /**
-     * GET /auth/user - Obter informação do utilizador autenticado (Ficha 8)
-     */
     @GET
     @Path("/user")
     @Authenticated

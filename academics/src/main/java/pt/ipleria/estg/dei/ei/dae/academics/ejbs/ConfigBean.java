@@ -67,8 +67,6 @@ public class ConfigBean {
             System.out.println("Created tag: Projeto Y");
         }
 
-        // Criar publicação de teste (comentado para evitar problemas durante @PostConstruct)
-        // As publicações podem ser criadas via API depois do deployment
         /*
         if (collaborator != null && publicationBean.findByOwner("collaborator").size() == 0) {
             try {

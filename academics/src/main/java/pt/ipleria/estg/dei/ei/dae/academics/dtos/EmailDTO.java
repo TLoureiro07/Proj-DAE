@@ -1,6 +1,8 @@
 package pt.ipleria.estg.dei.ei.dae.academics.dtos;
 
-public class EmailDTO {
+import java.io.Serializable;
+
+public class EmailDTO implements Serializable {
     public String subject;
     public String body;
 

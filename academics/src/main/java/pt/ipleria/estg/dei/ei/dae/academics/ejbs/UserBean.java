@@ -142,7 +142,6 @@ public class UserBean {
     public List<Tag> getSubscribedTags(String username) {
         User user = find(username);
         if (user == null) return List.of();
-        // Inicializar relação lazy antes de retornar
         Hibernate.initialize(user.getSubscribedTags());
         return user.getSubscribedTags();
     }

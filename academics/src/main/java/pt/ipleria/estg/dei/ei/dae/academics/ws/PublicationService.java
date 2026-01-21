@@ -45,10 +45,6 @@ import java.nio.charset.StandardCharsets;
 @Consumes(MediaType.APPLICATION_JSON)
 public class PublicationService {
 
-    /*
-    *
-    *
-    * */
     private static final Logger LOG = Logger.getLogger(PublicationService.class.getName());
 
 
@@ -113,7 +109,6 @@ public class PublicationService {
                 }
             }
 
-            // Recarregar com relações lazy inicializadas
             created = publicationBean.findWithRelations(created.getId());
             if (created == null) {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -132,7 +127,6 @@ public class PublicationService {
         }
     }
 
-    // EP01 - upload de publicação (PDF ou ZIP) - cria publicação diretamente (padrão Ficha 9)
     @POST
     @Path("upload")
     @Authenticated
@@ -155,7 +149,7 @@ public class PublicationService {
             }
 
             InputPart filePart = parts.get(0);
-            String filename = filePart.getFileName(); // Padrão Ficha 9
+            String filename = filePart.getFileName();
             if (filename == null || filename.isEmpty()) {
                 return Response.status(Response.Status.BAD_REQUEST)
                     .entity(Map.of("error", "Filename is required"))
@@ -171,7 +165,6 @@ public class PublicationService {
                     .build();
             }
 
-            // Recarregar com relações lazy inicializadas
             p = publicationBean.findWithRelations(p.getId());
             if (p == null) {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -310,13 +303,12 @@ public class PublicationService {
                     .build();
             }
             InputPart filePart = parts.get(0);
-            String filename = filePart.getFileName(); // Padrão Ficha 9
+            String filename = filePart.getFileName();
             InputStream inputStream = filePart.getBody(InputStream.class, null);
 
             Publication p = publicationBean.updateFile(id, inputStream, filename, username);
             if (p == null) return Response.status(Response.Status.NOT_FOUND).build();
 
-            // Recarregar com relações lazy inicializadas
             p = publicationBean.findWithRelations(p.getId());
             if (p == null) {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -330,7 +322,6 @@ public class PublicationService {
         }
     }
 
-    // Download de ficheiro de publicação (padrão Ficha 9)
     @GET
     @Path("{id}/file")
     @Authenticated
@@ -351,11 +342,8 @@ public class PublicationService {
                     .build();
             }
 
-            // Verificar se o utilizador pode ver esta publicação
-            // Se for o dono, pode sempre ver
             boolean canAccess = p.getOwner() != null && p.getOwner().getUsername().equals(username);
             
-            // Se não for o dono, verificar visibilidade
             if (!canAccess) {
                 if ("hidden".equals(p.getVisibility())) {
                     // Apenas Responsible/Administrator podem ver publicações ocultas
@@ -446,7 +434,6 @@ public class PublicationService {
                 .build();
         }
 
-        // Recarregar com relações lazy carregadas
         comment = commentBean.findWithRelations(comment.getId());
         if (comment == null) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -454,7 +441,6 @@ public class PublicationService {
                 .build();
         }
 
-        //When a comment is added a notification is sent
         Publication publication = publicationBean.findWithRelations(publicationId);
         notifyCommentSubscribers(publication, comment, username);
 
@@ -487,7 +473,6 @@ public class PublicationService {
 
         List<Comment> comments = commentBean.findByPublication(publicationId, includeHidden);
 
-        // As relações lazy já foram carregadas via JOIN FETCH na query
         List<CommentDTO> dtos = comments.stream()
             .map(CommentDTO::from)
             .collect(Collectors.toList());
@@ -589,7 +574,6 @@ public class PublicationService {
                 .build();
         }
 
-        // Recarregar com relações lazy carregadas
         rating = ratingBean.findWithRelations(rating.getId());
         if (rating == null) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -607,7 +591,6 @@ public class PublicationService {
     public Response listRatings(@PathParam("id") Long publicationId) {
         List<Rating> ratings = ratingBean.findByPublication(publicationId);
 
-        // As relações lazy já foram carregadas via JOIN FETCH na query
         List<RatingDTO> dtos = ratings.stream()
             .map(RatingDTO::from)
             .collect(Collectors.toList());
