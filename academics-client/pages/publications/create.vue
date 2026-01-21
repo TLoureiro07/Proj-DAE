@@ -77,7 +77,14 @@
           <h2>Ficheiro (Opcional)</h2>
           <div class="form-group">
             <label for="file">Ficheiro PDF ou ZIP</label>
-            <div class="file-upload-area" :class="{ 'has-file': fileInput?.files?.length > 0 }">
+            <div 
+              class="file-upload-area" 
+              :class="{ 'has-file': selectedFile !== null, 'dragover': isDragging }"
+              @click="fileInput?.click()"
+              @dragover.prevent="handleDragOver"
+              @dragleave.prevent="handleDragLeave"
+              @drop.prevent="handleDrop"
+            >
               <input 
                 id="file"
                 type="file" 
@@ -87,11 +94,18 @@
                 class="file-input"
               />
               <div class="file-upload-content">
-                <span v-if="!fileInput?.files?.length" class="file-placeholder">
+                <span v-if="!selectedFile" class="file-placeholder">
                   Clique para selecionar ou arraste um ficheiro aqui
                 </span>
                 <span v-else class="file-selected">
-                  {{ fileInput.files[0].name }} ({{ formatFileSize(fileInput.files[0].size) }})
+                  {{ selectedFile.name }} ({{ formatFileSize(selectedFile.size) }})
+                  <button 
+                    type="button"
+                    @click.stop="removeFile"
+                    class="file-remove"
+                  >
+                    ×
+                  </button>
                 </span>
               </div>
             </div>
@@ -163,6 +177,8 @@ const fileInput = ref(null)
 const submitting = ref(false)
 const success = ref(false)
 const publicationId = ref(null)
+const selectedFile = ref(null)
+const isDragging = ref(false)
 
 const authorsText = ref('')
 const selectedTags = ref([])
@@ -205,8 +221,64 @@ async function loadTags() {
   }
 }
 
-function handleFileChange() {
-  // File change handled by ref
+function handleFileChange(event) {
+  const files = event.target.files
+  if (files && files.length > 0) {
+    const file = files[0]
+    if (validateFile(file)) {
+      selectedFile.value = file
+    }
+  }
+}
+
+function handleDragOver(event) {
+  isDragging.value = true
+  event.preventDefault()
+}
+
+function handleDragLeave(event) {
+  isDragging.value = false
+  event.preventDefault()
+}
+
+function handleDrop(event) {
+  isDragging.value = false
+  event.preventDefault()
+  
+  const files = event.dataTransfer.files
+  if (files && files.length > 0) {
+    const file = files[0]
+    if (validateFile(file)) {
+      selectedFile.value = file
+      // Atualizar o input file para manter sincronizado
+      const dataTransfer = new DataTransfer()
+      dataTransfer.items.add(file)
+      fileInput.value.files = dataTransfer.files
+    }
+  }
+}
+
+function validateFile(file) {
+  const allowedTypes = ['application/pdf', 'application/zip', 'application/x-zip-compressed']
+  const allowedExtensions = ['.pdf', '.zip']
+  const fileName = file.name.toLowerCase()
+  
+  const hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext))
+  const hasValidType = allowedTypes.includes(file.type)
+  
+  if (!hasValidExtension && !hasValidType) {
+    alert('Por favor, seleciona um ficheiro PDF ou ZIP')
+    return false
+  }
+  
+  return true
+}
+
+function removeFile() {
+  selectedFile.value = null
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
 }
 
 function formatFileSize(bytes) {
@@ -246,9 +318,9 @@ async function createPublication() {
     let response
 
     // Se houver ficheiro, usar upload; senão, criar sem ficheiro
-    if (fileInput.value && fileInput.value.files && fileInput.value.files.length > 0) {
+    if (selectedFile.value) {
       const formData = new FormData()
-      formData.append('file', fileInput.value.files[0])
+      formData.append('file', selectedFile.value)
 
       response = await $fetch(`${api}/publications/upload`, {
         method: 'POST',
@@ -448,6 +520,40 @@ onMounted(() => {
 .file-upload-area.has-file {
   border-color: #28a745;
   background: #f0fff4;
+}
+
+.file-upload-area.dragover {
+  border-color: #667eea;
+  background: #f0f4ff;
+  transform: scale(1.02);
+}
+
+.file-selected {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.file-remove {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.2s;
+}
+
+.file-remove:hover {
+  background: #c82333;
 }
 
 .file-input {

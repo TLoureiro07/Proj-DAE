@@ -331,6 +331,71 @@ public class PublicationService {
         }
     }
 
+    // Download de ficheiro de publicação (padrão Ficha 9)
+    @GET
+    @Path("{id}/file")
+    @Authenticated
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public Response downloadFile(@PathParam("id") Long id,
+                                 @Context SecurityContext sc) {
+        try {
+            String username = sc != null && sc.getUserPrincipal() != null ?
+                sc.getUserPrincipal().getName() : null;
+            if (username == null) {
+                return Response.status(Response.Status.UNAUTHORIZED).build();
+            }
+
+            Publication p = publicationBean.find(id);
+            if (p == null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                    .entity("Publicação não encontrada")
+                    .build();
+            }
+
+            // Verificar se o utilizador pode ver esta publicação
+            // Se for o dono, pode sempre ver
+            boolean canAccess = p.getOwner() != null && p.getOwner().getUsername().equals(username);
+            
+            // Se não for o dono, verificar visibilidade
+            if (!canAccess) {
+                if ("hidden".equals(p.getVisibility())) {
+                    // Apenas Responsible/Administrator podem ver publicações ocultas
+                    if (!sc.isUserInRole("Responsible") && !sc.isUserInRole("Administrator")) {
+                        return Response.status(Response.Status.FORBIDDEN)
+                            .entity("Não tem permissão para aceder a esta publicação")
+                            .build();
+                    }
+                } else {
+                    // Publicações públicas ou internas podem ser vistas por todos autenticados
+                    canAccess = true;
+                }
+            }
+
+            if (p.getFilePath() == null || p.getFilePath().isEmpty()) {
+                return Response.status(Response.Status.NOT_FOUND)
+                    .entity("Ficheiro não encontrado para esta publicação")
+                    .build();
+            }
+
+            java.nio.file.Path filePath = java.nio.file.Paths.get(p.getFilePath());
+            if (!java.nio.file.Files.exists(filePath) || !java.nio.file.Files.isRegularFile(filePath)) {
+                return Response.status(Response.Status.NOT_FOUND)
+                    .entity("Ficheiro não encontrado: " + filePath)
+                    .build();
+            }
+
+            String filename = p.getFileName() != null ? p.getFileName() : "publication_file";
+
+            return Response.ok(filePath.toFile())
+                .header("Content-Disposition", "attachment;filename=\"" + filename + "\"")
+                .build();
+        } catch (Exception e) {
+            return Response.serverError()
+                .entity("Erro ao descarregar ficheiro: " + e.getMessage())
+                .build();
+        }
+    }
+
     // helper to parse filename from Content-Disposition header
     private String extractFileName(InputPart part) {
         try {
