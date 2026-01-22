@@ -76,7 +76,7 @@
         <h2>Avaliar Publicação</h2>
         <div>
           <label>Rating (1-5): </label>
-          <select v-model.number="newRating.value">
+          <select v-model.number="newRating">
             <option :value="1">1 estrela</option>
             <option :value="2">2 estrelas</option>
             <option :value="3">3 estrelas</option>
@@ -315,7 +315,7 @@ const editIsDragging = ref(false)
 const editFileInput = ref(null)
 
 const newComment = ref({ text: '' })
-const newRating = ref({ value: 5 })
+const newRating = ref(5)
 
 const isResponsible = computed(() => 
   user.value?.role === 'Responsible' || user.value?.role === 'Administrator'
@@ -397,16 +397,11 @@ async function submitComment() {
 }
 
 async function submitRating() {
-  // Garantir que temos um valor válido
-  const ratingValue = typeof newRating.value === 'number' 
-    ? newRating.value 
-    : parseInt(newRating.value)
-  
-  if (!ratingValue || isNaN(ratingValue) || ratingValue < 1 || ratingValue > 5) {
+  if (newRating.value < 1 || newRating.value > 5) {
     alert('Por favor, seleciona um rating válido entre 1 e 5')
     return
   }
-  
+
   submitting.value = true
   try {
     await $fetch(`${api}/publications/${publicationId}/ratings`, {
@@ -415,25 +410,15 @@ async function submitRating() {
         'Authorization': `Bearer ${token.value}`,
         'Content-Type': 'application/json'
       },
-      body: { value: ratingValue }
+      body: { value: newRating.value }
     })
     await loadRatings()
-    await loadPublication() // Recarregar para atualizar rating médio
-  } catch (e) {
-    console.error('Erro completo no rating:', e)
-    let errorMsg = 'Erro ao avaliar'
-    if (e.data?.error) {
-      errorMsg += ': ' + e.data.error
-    } else if (e.response?._data?.error) {
-      errorMsg += ': ' + e.response._data.error
-    } else if (e.message) {
-      errorMsg += ': ' + e.message
-    }
-    alert(errorMsg)
+    await loadPublication()
   } finally {
     submitting.value = false
   }
 }
+
 
 function formatDate(dateString) {
   if (!dateString) return 'N/A'
