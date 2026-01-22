@@ -414,7 +414,7 @@ public class PublicationBean {
 
             if (line.trim().isEmpty()) continue;
 
-            String[] parts = line.split(",");
+            String[] parts = line.split(";");
 
             if (parts.length < 7) continue;
 

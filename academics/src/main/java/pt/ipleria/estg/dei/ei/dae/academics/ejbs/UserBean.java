@@ -224,7 +224,7 @@ public class UserBean {
 
             if (line.trim().isEmpty()) continue;
 
-            String[] parts = line.split(",");
+            String[] parts = line.split(";", -1);
 
             if (parts.length < 5) continue;
 
@@ -232,7 +232,7 @@ public class UserBean {
             String password = parts[1].trim();
             String name     = parts[2].trim();
             String email    = parts[3].trim();
-            String role     = parts[4].trim();
+            String role = parts[4].trim().replace("\r", "");
 
             if (find(username) != null) continue;
 
