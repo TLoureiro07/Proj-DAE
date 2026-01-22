@@ -996,4 +996,33 @@ public class PublicationService {
             LOG.log(Level.SEVERE, "Failed to send subscription notification to " + user.getEmail(), e);
         }
     }
+
+    @POST
+    @Path("/import-csv")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Authenticated
+    @RolesAllowed({"Administrator"})
+    public Response importPublicationsCSV(MultipartFormDataInput input) {
+
+        try {
+            InputPart filePart = input.getFormDataMap().get("file").get(0);
+            InputStream is = filePart.getBody(InputStream.class, null);
+
+            int imported = publicationBean.importFromCSV(is);
+
+            return Response.ok(
+                    Map.of(
+                            "message", "Publicações importadas com sucesso",
+                            "count", imported
+                    )
+            ).build();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", e.getMessage()))
+                    .build();
+        }
+    }
+
 }

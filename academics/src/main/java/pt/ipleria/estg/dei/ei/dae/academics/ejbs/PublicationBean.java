@@ -24,6 +24,11 @@ import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Rating;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+
+
 @Stateless
 public class PublicationBean {
     private static final String UPLOAD_DIR = "/tmp/uploads";
@@ -389,5 +394,74 @@ public class PublicationBean {
         }
         return p;
     }
+
+    public int importFromCSV(InputStream inputStream) throws Exception {
+
+        BufferedReader reader = new BufferedReader(
+                new InputStreamReader(inputStream, StandardCharsets.UTF_8)
+        );
+
+        String line;
+        boolean firstLine = true;
+        int count = 0;
+
+        while ((line = reader.readLine()) != null) {
+
+            if (firstLine) {
+                firstLine = false;
+                continue;
+            }
+
+            if (line.trim().isEmpty()) continue;
+
+            String[] parts = line.split(",");
+
+            if (parts.length < 7) continue;
+
+            String ownerUsername   = parts[0].trim();
+            String title           = parts[1].trim();
+            String summary         = parts[2].trim();
+            String scientificArea  = parts[3].trim();
+            String visibility      = parts[4].trim();
+            String authorsRaw      = parts[5].trim();
+            String tagsRaw         = parts[6].trim();
+
+            User owner = userBean.find(ownerUsername);
+            if (owner == null) continue;
+
+            Publication p = new Publication();
+            p.setOwner(owner);
+            p.setTitle(title);
+            p.setSummary(summary.isEmpty() ? null : summary);
+            p.setScientificArea(scientificArea.isEmpty() ? null : scientificArea);
+            p.setVisibility(visibility.isEmpty() ? "internal" : visibility);
+            p.setUploadDate(LocalDate.now());
+            p.setLastEdited(LocalDateTime.now());
+
+            if (!authorsRaw.isEmpty()) {
+                List<String> authors = List.of(authorsRaw.split("\\|"));
+                p.setAuthors(new ArrayList<>(authors));
+            }
+
+            em.persist(p);
+            em.flush();
+
+            if (!tagsRaw.isEmpty()) {
+                String[] tagNames = tagsRaw.split("\\|");
+                for (String tagName : tagNames) {
+                    Tag tag = tagBean.findByName(tagName.trim());
+                    if (tag != null) {
+                        p.addTag(tag);
+                        userBean.subscribeToTag(ownerUsername, tag.getId());
+                    }
+                }
+            }
+
+            count++;
+        }
+
+        return count;
+    }
+
 
 }
