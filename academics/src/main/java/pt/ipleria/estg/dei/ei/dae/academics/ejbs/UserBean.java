@@ -122,13 +122,17 @@ public class UserBean {
         em.merge(user);
     }
 
-    public void subscribeToTag(String username, Long tagId) {
+    public boolean subscribeToTag(String username, Long tagId) {
         User user = find(username);
         Tag tag = tagBean.find(tagId);
         if (user != null && tag != null) {
+            if (!user.getSubscribedTags().contains(tag)) {
             user.addSubscribedTag(tag);
             em.merge(user);
+                return true;
         }
+        }
+        return false;
     }
 
     public void unsubscribeFromTag(String username, Long tagId) {

@@ -38,6 +38,37 @@
             </div>
             <div class="card-footer">
               <nuxt-link :to="`/publications/${pub.id}`" class="btn btn-small">Ver Detalhes</nuxt-link>
+              <button @click="showHistory(pub.id)" class="btn btn-small btn-secondary" style="margin-left: 0.5rem;">Histórico</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="showHistoryModal" class="modal-overlay" @click="closeHistoryModal">
+    <div class="modal-content" @click.stop>
+      <div class="modal-header">
+        <h2>Histórico de Edições</h2>
+        <button @click="closeHistoryModal" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div v-if="loadingHistory">A carregar histórico...</div>
+        <div v-else-if="historyError" class="error-message">{{ historyError }}</div>
+        <div v-else-if="history.length === 0" class="empty-history">
+          <p>Não há histórico de edições para esta publicação.</p>
+        </div>
+        <div v-else class="history-list">
+          <div v-for="entry in history" :key="entry.editId" class="history-item">
+            <div class="history-header">
+              <strong>{{ formatDateTime(entry.editDate) }}</strong>
+              <span v-if="entry.editedBy" class="edited-by">por {{ entry.editedBy }}</span>
+            </div>
+            <div class="history-changes">
+              <strong>Alterações:</strong>
+              <ul>
+                <li v-for="change in entry.changes" :key="change">{{ change }}</li>
+              </ul>
             </div>
           </div>
         </div>
@@ -59,6 +90,11 @@ const router = useRouter()
 const publications = ref([])
 const loading = ref(true)
 const error = ref(null)
+const showHistoryModal = ref(false)
+const currentPublicationId = ref(null)
+const history = ref([])
+const loadingHistory = ref(false)
+const historyError = ref(null)
 
 async function loadPublications() {
   if (!token.value || !user.value) {
@@ -101,6 +137,41 @@ function formatDate(dateString) {
 function truncate(text, length) {
   if (!text) return ''
   return text.length > length ? text.substring(0, length) + '...' : text
+}
+
+function formatDateTime(dateString) {
+  if (!dateString) return 'N/A'
+  try {
+    return new Date(dateString).toLocaleString('pt-PT')
+  } catch {
+    return dateString
+  }
+}
+
+async function showHistory(publicationId) {
+  currentPublicationId.value = publicationId
+  showHistoryModal.value = true
+  loadingHistory.value = true
+  historyError.value = null
+  
+  try {
+    const response = await $fetch(`${api}/publications/${publicationId}/history`, {
+      headers: { 'Authorization': `Bearer ${token.value}` }
+    })
+    history.value = response.history || []
+  } catch (e) {
+    historyError.value = 'Erro ao carregar histórico: ' + (e.message || 'Erro desconhecido')
+    console.error('Erro:', e)
+  } finally {
+    loadingHistory.value = false
+  }
+}
+
+function closeHistoryModal() {
+  showHistoryModal.value = false
+  currentPublicationId.value = null
+  history.value = []
+  historyError.value = null
 }
 
 onMounted(() => {
@@ -260,6 +331,123 @@ onMounted(() => {
   padding: 1rem;
   border-radius: 4px;
   margin: 1rem 0;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #333;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #666;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  color: #333;
+}
+
+.modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.empty-history {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.history-item {
+  border: 1px solid #eee;
+  border-radius: 4px;
+  padding: 1rem;
+  background: #f9f9f9;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.edited-by {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.history-changes {
+  margin-top: 0.5rem;
+}
+
+.history-changes ul {
+  margin: 0.5rem 0 0 1.5rem;
+  padding: 0;
+}
+
+.history-changes li {
+  margin: 0.25rem 0;
+  color: #555;
 }
 </style>
 
