@@ -117,7 +117,7 @@ public class PublicationService {
                         Tag tag = tagBean.find(tagDto.id);
                         if (tag != null) {
                             boolean wasNewSubscription = publicationBean.wasOwnerSubscribedToTag(created.getId(), tag.getId());
-                            publicationBean.addTag(created.getId(), tag.getId());
+                            publicationBean.addTag(created.getId(), tag.getId(), null);
                             if (wasNewSubscription) {
                                 subscribedTags.add(tag.getName());
                                 notifyUserSubscribedToTag(username, tag);
@@ -761,7 +761,7 @@ public class PublicationService {
             wasNewSubscription = publicationBean.wasOwnerSubscribedToTag(publicationId, tagId);
         }
 
-        p = publicationBean.addTag(publicationId, tagId);
+        p = publicationBean.addTag(publicationId, tagId, username);
         if (p == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
@@ -790,8 +790,12 @@ public class PublicationService {
     @Authenticated
     @RolesAllowed({"Responsible", "Administrator"})
     public Response removeTagFromPublication(@PathParam("id") Long publicationId,
-                                           @PathParam("tagId") Long tagId) {
-        Publication p = publicationBean.removeTag(publicationId, tagId);
+                                           @PathParam("tagId") Long tagId,
+                                           @Context SecurityContext sc) {
+        String username = sc != null && sc.getUserPrincipal() != null
+                ? sc.getUserPrincipal().getName()
+                : null;
+        Publication p = publicationBean.removeTag(publicationId, tagId, username);
         if (p == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }

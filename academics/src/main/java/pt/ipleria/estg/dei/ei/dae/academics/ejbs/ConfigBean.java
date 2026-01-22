@@ -79,7 +79,7 @@ public class ConfigBean {
             
             Publication created = publicationBean.create("collaborator", testPub);
             if (created != null && tagProjetoX != null) {
-                publicationBean.addTag(created.getId(), tagProjetoX.getId());
+                publicationBean.addTag(created.getId(), tagProjetoX.getId(), "collaborator");
                 System.out.println("Created test publication: " + created.getTitle());
             }
             } catch (Exception e) {

@@ -96,10 +96,12 @@ public class PublicationBean {
         if (p == null) return null;
         User editedBy = userBean.find(editedByUsername);
         if (editedBy == null) return null;
+        String oldValue = p.getSummary() != null ? p.getSummary() : "(vazio)";
+        String newValue = summary != null ? summary : "(vazio)";
         p.setSummary(summary);
         p.setLastEdited(LocalDateTime.now());
         em.merge(p);
-        recordHistory(p, editedBy, List.of("summary"));
+        recordHistory(p, editedBy, List.of("Resumo: '" + oldValue + "' -> '" + newValue + "'"));
         return p;
     }
 
@@ -108,10 +110,12 @@ public class PublicationBean {
         if (p == null) return null;
         User editedBy = userBean.find(editedByUsername);
         if (editedBy == null) return null;
+        String oldValue = p.getVisibility() != null ? p.getVisibility() : "(vazio)";
+        String newValue = visibility != null ? visibility : "(vazio)";
         p.setVisibility(visibility);
         p.setLastEdited(LocalDateTime.now());
         em.merge(p);
-        recordHistory(p, editedBy, List.of("visibility"));
+        recordHistory(p, editedBy, List.of("Visibilidade: '" + oldValue + "' -> '" + newValue + "'"));
         return p;
     }
 
@@ -120,10 +124,12 @@ public class PublicationBean {
         if (p == null) return null;
         User editedBy = userBean.find(editedByUsername);
         if (editedBy == null) return null;
+        String oldValue = p.getTitle() != null ? p.getTitle() : "(vazio)";
+        String newValue = title != null ? title : "(vazio)";
         p.setTitle(title);
         p.setLastEdited(LocalDateTime.now());
         em.merge(p);
-        recordHistory(p, editedBy, List.of("title"));
+        recordHistory(p, editedBy, List.of("Título: '" + oldValue + "' -> '" + newValue + "'"));
         return p;
     }
 
@@ -132,10 +138,12 @@ public class PublicationBean {
         if (p == null) return null;
         User editedBy = userBean.find(editedByUsername);
         if (editedBy == null) return null;
+        String oldValue = p.getScientificArea() != null ? p.getScientificArea() : "(vazio)";
+        String newValue = scientificArea != null ? scientificArea : "(vazio)";
         p.setScientificArea(scientificArea);
         p.setLastEdited(LocalDateTime.now());
         em.merge(p);
-        recordHistory(p, editedBy, List.of("scientificArea"));
+        recordHistory(p, editedBy, List.of("Área Científica: '" + oldValue + "' -> '" + newValue + "'"));
         return p;
     }
 
@@ -144,10 +152,14 @@ public class PublicationBean {
         if (p == null) return null;
         User editedBy = userBean.find(editedByUsername);
         if (editedBy == null) return null;
+        String oldValue = p.getAuthors() != null && !p.getAuthors().isEmpty() 
+            ? String.join(", ", p.getAuthors()) : "(vazio)";
+        String newValue = authors != null && !authors.isEmpty() 
+            ? String.join(", ", authors) : "(vazio)";
         p.setAuthors(authors != null ? authors : new ArrayList<>());
         p.setLastEdited(LocalDateTime.now());
         em.merge(p);
-        recordHistory(p, editedBy, List.of("authors"));
+        recordHistory(p, editedBy, List.of("Autores: '" + oldValue + "' -> '" + newValue + "'"));
         return p;
     }
 
@@ -214,11 +226,13 @@ public class PublicationBean {
         if (p == null) return null;
         User editedBy = userBean.find(editedByUsername);
         if (editedBy == null) editedBy = p.getOwner();
+        String oldValue = p.getFileName() != null ? p.getFileName() : "(sem ficheiro)";
+        String newValue = fileName != null ? fileName : "(sem ficheiro)";
         p.setFileData(data);
         p.setFileName(fileName);
         p.setLastEdited(LocalDateTime.now());
         em.merge(p);
-        recordHistory(p, editedBy, List.of("file"));
+        recordHistory(p, editedBy, List.of("Ficheiro: '" + oldValue + "' -> '" + newValue + "'"));
         return p;
     }
 
@@ -253,7 +267,6 @@ public class PublicationBean {
         p.setFilePath(targetFilePath.toString());
 
         em.persist(p);
-        recordHistory(p, owner, List.of("upload"));
         return p;
     }
 
@@ -282,11 +295,13 @@ public class PublicationBean {
             } catch (Exception ignored) {}
         }
 
+        String oldValue = p.getFileName() != null ? p.getFileName() : "(sem ficheiro)";
+        String newValue = fileName != null ? fileName : "(sem ficheiro)";
         p.setFileName(fileName);
         p.setFilePath(targetFilePath.toString());
         p.setLastEdited(LocalDateTime.now());
         em.merge(p);
-        recordHistory(p, editedBy, List.of("file"));
+        recordHistory(p, editedBy, List.of("Ficheiro: '" + oldValue + "' -> '" + newValue + "'"));
         return p;
     }
 
@@ -311,15 +326,23 @@ public class PublicationBean {
         return history;
     }
 
-    public Publication addTag(Long publicationId, Long tagId) {
+    public Publication addTag(Long publicationId, Long tagId, String editedByUsername) {
         Publication p = find(publicationId);
         Tag tag = tagBean.find(tagId);
         if (p != null && tag != null) {
             p.addTag(tag);
+            p.setLastEdited(LocalDateTime.now());
             em.merge(p);
             
             if (p.getOwner() != null) {
                 userBean.subscribeToTag(p.getOwner().getUsername(), tagId);
+            }
+            
+            if (editedByUsername != null) {
+                User editedBy = userBean.find(editedByUsername);
+                if (editedBy != null) {
+                    recordHistory(p, editedBy, List.of("Tag adicionada: '" + tag.getName() + "'"));
+                }
             }
         }
         return p;
@@ -338,12 +361,20 @@ public class PublicationBean {
         return false;
     }
 
-    public Publication removeTag(Long publicationId, Long tagId) {
+    public Publication removeTag(Long publicationId, Long tagId, String editedByUsername) {
         Publication p = find(publicationId);
         Tag tag = tagBean.find(tagId);
         if (p != null && tag != null) {
             p.removeTag(tag);
+            p.setLastEdited(LocalDateTime.now());
             em.merge(p);
+            
+            if (editedByUsername != null) {
+                User editedBy = userBean.find(editedByUsername);
+                if (editedBy != null) {
+                    recordHistory(p, editedBy, List.of("Tag removida: '" + tag.getName() + "'"));
+                }
+            }
         }
         return p;
     }
