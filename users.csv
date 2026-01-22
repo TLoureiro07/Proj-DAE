@@ -1,0 +1,3 @@
+username,password,name,email,role
+john,john123,John Doe,john@gmail.com,Collaborator
+ana,ana123,Ana Silva,ana@gmail.com,Responsible

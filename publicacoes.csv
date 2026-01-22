@@ -1,0 +1,4 @@
+ownerUsername,title,summary,scientificArea,visibility,authors,tags
+admin,Introdução à Inteligência Artificial,Estudo introdutório sobre IA,Inteligência Artificial,public,Alan Turing|John McCarthy,AI|Machine Learning
+admin,Redes Neuronais Profundas,Análise de deep learning,Ciência de Dados,internal,Yann LeCun|Geoffrey Hinton,Deep Learning|AI
+collab1,Segurança em Sistemas Distribuídos,,Segurança Informática,internal,Alice Smith,Security|Distributed Systems
