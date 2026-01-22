@@ -97,13 +97,19 @@ public class PublicationService {
                     .build();
             }
 
-            // Associar tags se fornecidas (depois de criar a publicação)
+            java.util.List<String> subscribedTags = new java.util.ArrayList<>();
+            
             if (dto.tags != null && !dto.tags.isEmpty()) {
                 for (TagDTO tagDto : dto.tags) {
                     if (tagDto != null && tagDto.id != null) {
                         Tag tag = tagBean.find(tagDto.id);
                         if (tag != null) {
+                            boolean wasNewSubscription = publicationBean.wasOwnerSubscribedToTag(created.getId(), tag.getId());
                             publicationBean.addTag(created.getId(), tag.getId());
+                            if (wasNewSubscription) {
+                                subscribedTags.add(tag.getName());
+                                notifyUserSubscribedToTag(username, tag);
+                            }
                         }
                     }
                 }
@@ -652,12 +658,26 @@ public class PublicationService {
                 ? sc.getUserPrincipal().getName()
                 : null;
 
-        Publication p = publicationBean.addTag(publicationId, tagId);
+        Publication p = publicationBean.find(publicationId);
         if (p == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
-        // Recarregar com relações lazy inicializadas
+        Tag tag = tagBean.find(tagId);
+        if (tag == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        boolean wasNewSubscription = false;
+        if (p.getOwner() != null && p.getOwner().getUsername().equals(username)) {
+            wasNewSubscription = publicationBean.wasOwnerSubscribedToTag(publicationId, tagId);
+        }
+
+        p = publicationBean.addTag(publicationId, tagId);
+        if (p == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
         p = publicationBean.findWithRelations(p.getId());
         if (p == null) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -665,10 +685,12 @@ public class PublicationService {
                 .build();
         }
 
-        Tag tag = tagBean.find(tagId);
-
-        if (tag != null && username != null) {
+        if (username != null) {
             notifyTagAddedSubscribers(p, tag, username);
+            
+            if (wasNewSubscription) {
+                notifyUserSubscribedToTag(username, tag);
+            }
         }
 
         return Response.ok(PublicationDTO.from(p)).build();
@@ -861,6 +883,25 @@ public class PublicationService {
                 LOG.log(Level.SEVERE,
                         "Failed to send email to " + user.getEmail(), e);
             }
+        }
+    }
+
+    private void notifyUserSubscribedToTag(String username, Tag tag) {
+        User user = userBean.find(username);
+        if (user == null || tag == null) return;
+
+        String subject = "[Academics] A tua publicação foi adicionada à plataforma";
+
+        String body = "Olá " + user.getName() + ",\n\n" +
+                "A tua publicação foi adicionada à plataforma.\n\n" +
+                "Foste automaticamente subscrito na tag: " + tag.getName() + "\n\n" +
+                "Receberás notificações sempre que houver novidades relacionadas com esta tag.";
+
+        try {
+            emailBean.send(user.getEmail(), subject, body);
+            LOG.info("Subscription notification sent to " + user.getEmail());
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, "Failed to send subscription notification to " + user.getEmail(), e);
         }
     }
 }

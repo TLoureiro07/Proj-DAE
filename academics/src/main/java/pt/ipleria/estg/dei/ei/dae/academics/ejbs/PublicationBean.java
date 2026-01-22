@@ -42,6 +42,13 @@ public class PublicationBean {
         p.setUploadDate(LocalDate.now());
         p.setLastEdited(LocalDateTime.now());
         em.persist(p);
+        
+        if (p.getTags() != null && !p.getTags().isEmpty()) {
+            for (Tag tag : p.getTags()) {
+                userBean.subscribeToTag(ownerUsername, tag.getId());
+            }
+        }
+        
         return p;
     }
 
@@ -293,8 +300,25 @@ public class PublicationBean {
         if (p != null && tag != null) {
             p.addTag(tag);
             em.merge(p);
+            
+            if (p.getOwner() != null) {
+                userBean.subscribeToTag(p.getOwner().getUsername(), tagId);
+            }
         }
         return p;
+    }
+    
+    public boolean wasOwnerSubscribedToTag(Long publicationId, Long tagId) {
+        Publication p = find(publicationId);
+        if (p != null && p.getOwner() != null) {
+            User user = userBean.find(p.getOwner().getUsername());
+            Tag tag = tagBean.find(tagId);
+            if (user != null && tag != null) {
+                Hibernate.initialize(user.getSubscribedTags());
+                return !user.getSubscribedTags().contains(tag);
+            }
+        }
+        return false;
     }
 
     public Publication removeTag(Long publicationId, Long tagId) {
