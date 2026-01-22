@@ -20,6 +20,11 @@ import pt.ipleria.estg.dei.ei.dae.academics.security.Hasher;
 
 import java.util.List;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+
 @Stateless
 public class UserBean {
 
@@ -198,5 +203,46 @@ public class UserBean {
         em.flush(); // Sincronizar remoção das relações OneToMany
 
         em.remove(user);
+    }
+
+    public int importFromCSV(InputStream inputStream) throws Exception {
+
+        BufferedReader reader = new BufferedReader(
+                new InputStreamReader(inputStream, StandardCharsets.UTF_8)
+        );
+
+        String line;
+        int count = 0;
+        boolean firstLine = true;
+
+        while ((line = reader.readLine()) != null) {
+
+            if (firstLine) {
+                firstLine = false;
+                continue;
+            }
+
+            if (line.trim().isEmpty()) continue;
+
+            String[] parts = line.split(",");
+
+            if (parts.length < 5) continue;
+
+            String username = parts[0].trim();
+            String password = parts[1].trim();
+            String name     = parts[2].trim();
+            String email    = parts[3].trim();
+            String role     = parts[4].trim();
+
+            if (find(username) != null) continue;
+
+            User created = create(username, password, name, email, role);
+
+            if (created != null) {
+                count++;
+            }
+        }
+
+        return count;
     }
 }

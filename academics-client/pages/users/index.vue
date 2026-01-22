@@ -41,6 +41,17 @@
       </form>
     </div>
 
+    <div class="card">
+      <h2>Importar Utilizadores (CSV)</h2>
+
+      <input type="file" accept=".csv" @change="onFileSelected" />
+
+      <button class="btn btn-primary" :disabled="!csvFile || importing" @click="importCSV">
+        {{ importing ? 'A importar...' : 'Importar CSV' }}
+      </button>
+    </div>
+
+
     <!-- Lista de Utilizadores -->
     <div class="card">
       <h2>Utilizadores ({{ users.length }})</h2>
@@ -67,12 +78,8 @@
               <td>{{ u.name }}</td>
               <td>{{ u.email }}</td>
               <td>
-                <select 
-                  v-model="u.role" 
-                  @change="changeRole(u.username, u.role)"
-                  class="select-small"
-                  :disabled="updating"
-                >
+                <select v-model="u.role" @change="changeRole(u.username, u.role)" class="select-small"
+                  :disabled="updating">
                   <option value="Collaborator">Colaborador</option>
                   <option value="Responsible">Responsável</option>
                   <option value="Administrator">Administrador</option>
@@ -85,26 +92,14 @@
               </td>
               <td>
                 <div class="actions">
-                  <button 
-                    @click="toggleActive(u.username, !u.active)"
-                    class="btn btn-small"
-                    :class="u.active ? 'btn-warning' : 'btn-success'"
-                    :disabled="updating"
-                  >
+                  <button @click="toggleActive(u.username, !u.active)" class="btn btn-small"
+                    :class="u.active ? 'btn-warning' : 'btn-success'" :disabled="updating">
                     {{ u.active ? 'Desativar' : 'Ativar' }}
                   </button>
-                  <button 
-                    @click="editUser(u)"
-                    class="btn btn-small btn-secondary"
-                    :disabled="updating"
-                  >
+                  <button @click="editUser(u)" class="btn btn-small btn-secondary" :disabled="updating">
                     Editar
                   </button>
-                  <button 
-                    @click="deleteUser(u.username)"
-                    class="btn btn-small btn-danger"
-                    :disabled="updating"
-                  >
+                  <button @click="deleteUser(u.username)" class="btn btn-small btn-danger" :disabled="updating">
                     Remover
                   </button>
                 </div>
@@ -165,6 +160,8 @@ const loading = ref(true)
 const creating = ref(false)
 const updating = ref(false)
 const error = ref(null)
+const csvFile = ref(null)
+const importing = ref(false)
 
 const isAdmin = computed(() => user.value?.role === 'Administrator')
 
@@ -270,6 +267,11 @@ function editUser(u) {
   editingUser.value = { ...u }
 }
 
+function onFileSelected(e) {
+  csvFile.value = e.target.files[0]
+}
+
+
 async function saveUser() {
   updating.value = true
   try {
@@ -324,6 +326,33 @@ async function deleteUser(username) {
   }
 }
 
+async function importCSV() {
+  importing.value = true
+
+  try {
+    const formData = new FormData()
+    formData.append('file', csvFile.value)
+
+    const res = await $fetch(`${api}/users/import-csv`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token.value}`
+      },
+      body: formData
+    })
+
+    alert(`Importados ${res.count} utilizadores`)
+    await loadUsers()
+
+  } catch (e) {
+    alert('Erro ao importar CSV')
+    console.error(e)
+  } finally {
+    importing.value = false
+  }
+}
+
+
 onMounted(() => {
   loadUsers()
 })
@@ -351,7 +380,7 @@ onMounted(() => {
   background: white;
   padding: 1.5rem;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   margin-bottom: 2rem;
 }
 
@@ -411,7 +440,8 @@ thead {
   background: #f8f9fa;
 }
 
-th, td {
+th,
+td {
   padding: 0.75rem;
   text-align: left;
   border-bottom: 1px solid #dee2e6;
@@ -508,7 +538,7 @@ tr.inactive {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;

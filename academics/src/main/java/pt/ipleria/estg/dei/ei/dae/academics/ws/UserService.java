@@ -26,6 +26,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+
+import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
+import org.jboss.resteasy.plugins.providers.multipart.InputPart;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
+
 @Path("/users")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
@@ -327,4 +336,33 @@ public class UserService {
                 .build();
         }
     }
+
+    @POST
+    @Path("/import-csv")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Authenticated
+    @RolesAllowed({"Administrator"})
+    public Response importUsersCSV(MultipartFormDataInput input) {
+
+        try {
+            InputPart filePart = input.getFormDataMap().get("file").get(0);
+            InputStream is = filePart.getBody(InputStream.class, null);
+
+            int imported = userBean.importFromCSV(is);
+
+            return Response.ok(
+                    Map.of(
+                            "message", "Utilizadores importados com sucesso",
+                            "count", imported
+                    )
+            ).build();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", e.getMessage()))
+                    .build();
+        }
+    }
+
 }
