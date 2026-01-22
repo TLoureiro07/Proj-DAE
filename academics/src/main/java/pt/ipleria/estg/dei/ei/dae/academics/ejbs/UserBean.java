@@ -126,10 +126,10 @@ public class UserBean {
         Tag tag = tagBean.find(tagId);
         if (user != null && tag != null) {
             if (!user.getSubscribedTags().contains(tag)) {
-                user.addSubscribedTag(tag);
-                em.merge(user);
+            user.addSubscribedTag(tag);
+            em.merge(user);
                 return true;
-            }
+        }
         }
         return false;
     }

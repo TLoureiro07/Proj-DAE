@@ -20,7 +20,9 @@ public class PublicationHistory {
 
     private LocalDateTime editDate;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "publication_history_changes", joinColumns = @JoinColumn(name = "edit_id"))
+    @Column(name = "change")
     private List<String> changes;
 
     // getters / setters

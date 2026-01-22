@@ -13,6 +13,7 @@ import pt.ipleria.estg.dei.ei.dae.academics.ejbs.TagBean;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.io.IOException;
 import java.io.InputStream;
@@ -135,6 +136,18 @@ public class PublicationBean {
         p.setLastEdited(LocalDateTime.now());
         em.merge(p);
         recordHistory(p, editedBy, List.of("scientificArea"));
+        return p;
+    }
+
+    public Publication updateAuthors(Long id, List<String> authors, String editedByUsername) {
+        Publication p = find(id);
+        if (p == null) return null;
+        User editedBy = userBean.find(editedByUsername);
+        if (editedBy == null) return null;
+        p.setAuthors(authors != null ? authors : new ArrayList<>());
+        p.setLastEdited(LocalDateTime.now());
+        em.merge(p);
+        recordHistory(p, editedBy, List.of("authors"));
         return p;
     }
 
@@ -289,9 +302,13 @@ public class PublicationBean {
     public List<PublicationHistory> getHistory(Long publicationId) {
         Publication p = find(publicationId);
         if (p == null) return List.of();
-        return em.createQuery("SELECT h FROM PublicationHistory h WHERE h.publication = :pub ORDER BY h.editDate DESC", PublicationHistory.class)
+        List<PublicationHistory> history = em.createQuery("SELECT h FROM PublicationHistory h LEFT JOIN FETCH h.editedBy WHERE h.publication = :pub ORDER BY h.editDate DESC", PublicationHistory.class)
                 .setParameter("pub", p)
                 .getResultList();
+        for (PublicationHistory h : history) {
+            Hibernate.initialize(h.getChanges());
+        }
+        return history;
     }
 
     public Publication addTag(Long publicationId, Long tagId) {
