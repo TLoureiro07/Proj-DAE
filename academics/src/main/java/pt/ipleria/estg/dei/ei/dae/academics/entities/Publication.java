@@ -14,12 +14,16 @@ public class Publication {
 
     private String title;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     private List<String> authors;
+
+    @Lob
+    @Column(columnDefinition = "TEXT") // adjust length as needed
+    private String aiSummary;
 
     private String scientificArea;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "publication_tag",
             joinColumns = @JoinColumn(name = "publication_id"),
@@ -42,6 +46,8 @@ public class Publication {
 
     private String filePath;
 
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String summary;
 
     private Double ratingAvg;
@@ -164,5 +170,13 @@ public class Publication {
     public void removeRating(Rating rating) {
         ratings.remove(rating);
         rating.setPublication(null);
+    }
+
+    public String getAiSummary() {
+        return aiSummary;
+    }
+
+    public void setAiSummary(String aiSummary) {
+        this.aiSummary = aiSummary;
     }
 }

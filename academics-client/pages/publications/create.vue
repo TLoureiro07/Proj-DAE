@@ -331,7 +331,7 @@ async function createPublication() {
       })
 
       publicationId.value = response.id
-      
+
       // Atualizar com os dados do formulário
       await $fetch(`${api}/publications/${response.id}`, {
         method: 'PATCH',

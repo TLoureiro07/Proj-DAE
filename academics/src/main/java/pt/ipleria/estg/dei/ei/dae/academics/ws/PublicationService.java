@@ -7,6 +7,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.SecurityContext;
 import pt.ipleria.estg.dei.ei.dae.academics.ejbs.PublicationBean;
+import pt.ipleria.estg.dei.ei.dae.academics.ejbs.AiSummaryBean;
 import pt.ipleria.estg.dei.ei.dae.academics.ejbs.CommentBean;
 import pt.ipleria.estg.dei.ei.dae.academics.ejbs.RatingBean;
 import pt.ipleria.estg.dei.ei.dae.academics.ejbs.TagBean;
@@ -71,6 +72,9 @@ public class PublicationService {
     @EJB
     private TagBean tagBean;
 
+    @EJB
+    private AiSummaryBean aiSummaryBean;
+
     // Criar publicação sem ficheiro (opcional)
     @POST
     @Authenticated
@@ -94,6 +98,13 @@ public class PublicationService {
             p.setScientificArea(dto.scientificArea != null ? dto.scientificArea.trim() : null);
             p.setVisibility(dto.visibility != null ? dto.visibility : "internal");
             p.setSummary(dto.summary != null ? dto.summary.trim() : null);
+
+            String baseText =   "Título: " + p.getTitle() + "\n" +
+                                "Área Científica: " + p.getScientificArea() + "\n" +
+                                "Autores: " + String.join(", ", p.getAuthors());
+
+            String aiSummary = aiSummaryBean.generateSummary(baseText);
+            p.setAiSummary(aiSummary);
 
             Publication created = publicationBean.create(username, p);
             if (created == null) {
@@ -355,7 +366,7 @@ public class PublicationService {
             // Verificar se o utilizador pode ver esta publicação
             // Se for o dono, pode sempre ver
             boolean canAccess = p.getOwner() != null && p.getOwner().getUsername().equals(username);
-            
+
             // Se não for o dono, verificar visibilidade
             if (!canAccess) {
                 if ("hidden".equals(p.getVisibility())) {
@@ -881,4 +892,98 @@ public class PublicationService {
             }
         }
     }
+
+    @POST
+    @Path("{id}/generate-summary")
+    @Authenticated
+    public Response regenerateSummary(@PathParam("id") Long id,
+                                      @Context SecurityContext sc) {
+
+        String username = sc.getUserPrincipal().getName();
+
+        // <--- Add the debug block here
+        Publication p;
+        try {
+            p = publicationBean.find(id);
+            System.out.println("Publication found: " + p.getId());
+            System.out.println("Owner: " + (p.getOwner() != null ? p.getOwner().getUsername() : "null"));
+            System.out.println("Authors count: " + (p.getAuthors() != null ? p.getAuthors().size() : "null"));
+            System.out.println("Tags count: " + (p.getTags() != null ? p.getTags().size() : "null"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.serverError()
+                    .entity(Map.of("error", "Erro ao buscar publicação: " + e.getMessage()))
+                    .build();
+        }
+
+        // Apenas dono ou Responsible/Admin
+        boolean canEdit = p.getOwner().getUsername().equals(username)
+                || sc.isUserInRole("Responsible")
+                || sc.isUserInRole("Administrator");
+
+        if (!canEdit) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        }
+
+        // Forçar carregamento de authors e tags para evitar LazyInitializationException
+        p.getAuthors().size(); // load authors
+        if (p.getTags() != null) {
+            p.getTags().size(); // load tags
+        }
+
+        String baseText =
+                "Título: " + p.getTitle() + "\n" +
+                        "Área Científica: " + p.getScientificArea() + "\n" +
+                        "Autores: " + String.join(", ", p.getAuthors());
+
+        System.out.println("Generating summary for text:\n" + baseText);
+
+        String aiSummary = aiSummaryBean.generateSummary(baseText);
+
+        System.out.println("AI returned: " + aiSummary);
+
+        if (aiSummary == null) {
+            return Response.serverError()
+                    .entity(Map.of("error", "Falha ao gerar resumo"))
+                    .build();
+        }
+
+        p = publicationBean.updateAiSummary(id, aiSummary, username);
+
+        return Response.ok(PublicationDTO.from(p)).build();
+    }
+
+    @PATCH
+    @Path("/{id}/ai-summary")
+    @Authenticated
+    public Response updateAiSummary(@PathParam("id") Long id,
+                                    Map<String, String> body,
+                                    @Context SecurityContext sc) {
+
+        String aiSummary = body.get("aiSummary");
+        if (aiSummary == null || aiSummary.trim().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", "aiSummary cannot be empty"))
+                    .build();
+        }
+
+        // Get the username from SecurityContext
+        String username = sc != null && sc.getUserPrincipal() != null
+                ? sc.getUserPrincipal().getName()
+                : null;
+
+        if (username == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+
+        Publication updated = publicationBean.updateAiSummary(id, aiSummary, username);
+        if (updated == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(Map.of("error", "Publication not found"))
+                    .build();
+        }
+
+        return Response.ok(PublicationDTO.from(updated)).build();
+    }
+
 }

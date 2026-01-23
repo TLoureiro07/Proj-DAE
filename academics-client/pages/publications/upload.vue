@@ -1,7 +1,7 @@
 <template>
   <div>
     <h1>Upload de Publicação</h1>
-    
+
     <div v-if="uploading">A fazer upload...</div>
     <div v-else-if="success">
       <p style="color: green;">Publicação criada com sucesso!</p>

@@ -5,9 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2acba6e1-8f60-4845-9495-d679c34c27f5" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/academics/docker-compose.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/academics/docker-compose.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academics-client/pages/publications/[id].vue" beforeDir="false" afterPath="$PROJECT_DIR$/academics-client/pages/publications/[id].vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academics-client/pages/publications/create.vue" beforeDir="false" afterPath="$PROJECT_DIR$/academics-client/pages/publications/create.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academics-client/pages/publications/upload.vue" beforeDir="false" afterPath="$PROJECT_DIR$/academics-client/pages/publications/upload.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academics/.env" beforeDir="false" afterPath="$PROJECT_DIR$/academics/.env" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/academics/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/academics/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/PublicationDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/PublicationDTO.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ejbs/PublicationBean.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ejbs/PublicationBean.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/entities/Publication.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/entities/Publication.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ws/PublicationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ws/PublicationService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -18,10 +24,14 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "customColor": "",
-  "associatedIndex": 2
+  <component name="KubernetesApiPersistence"><![CDATA[{}]]></component>
+  <component name="KubernetesApiProvider"><![CDATA[{
+  "isMigrated": true
 }]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 2
+}</component>
   <component name="ProjectId" id="38XZNhvDKkQbRUl36hTqBLX2619" />
   <component name="ProjectLevelVcsManager">
     <ConfirmationsSetting value="1" id="Add" />
@@ -36,9 +46,10 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "notif__email",
+    "ignore.virus.scanning.warn.message": "true",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/dev/DAE/Proj-DAE/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ejbs",
+    "last_opened_file_path": "C:/dev/Proj-DAE",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -77,21 +88,11 @@
       <option name="presentableId" value="Default" />
       <updated>1768947839562</updated>
       <workItem from="1768947841317" duration="18226000" />
+      <workItem from="1769115953808" duration="30661000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ws/PublicationService.java</url>
-          <line>576</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>

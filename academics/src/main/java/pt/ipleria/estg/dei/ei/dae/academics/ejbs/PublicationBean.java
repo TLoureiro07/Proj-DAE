@@ -320,4 +320,20 @@ public class PublicationBean {
         return p;
     }
 
+    public Publication updateAiSummary(Long id, String aiSummary, String editedByUsername) {
+        Publication p = find(id);
+        if (p == null) return null;
+
+        User editedBy = userBean.find(editedByUsername);
+        if (editedBy == null) return null;
+
+        p.setAiSummary(aiSummary);
+        p.setLastEdited(LocalDateTime.now());
+        em.merge(p);
+
+        // Track the change in history
+        recordHistory(p, editedBy, List.of("aiSummary"));
+
+        return p;
+    }
 }

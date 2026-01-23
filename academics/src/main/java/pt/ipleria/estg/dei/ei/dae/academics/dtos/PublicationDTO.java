@@ -18,6 +18,7 @@ public class PublicationDTO {
     public String uploadDate;  // Convertido para String para serialização JSON
     public String fileName;
     public String summary;
+    public String aiSummary;
     public Double ratingAvg;
     public String lastEdited;  // Convertido para String para serialização JSON
 
@@ -35,6 +36,7 @@ public class PublicationDTO {
         d.uploadDate = p.getUploadDate() != null ? p.getUploadDate().toString() : null;
         d.fileName = p.getFileName();
         d.summary = p.getSummary();
+        d.aiSummary = p.getAiSummary();
         d.ratingAvg = p.getRatingAvg();
         d.lastEdited = p.getLastEdited() != null ? p.getLastEdited().toString() : null;
         return d;
