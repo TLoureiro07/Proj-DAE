@@ -65,6 +65,29 @@
       </div>
     </div>
 
+<div v-if="authStore.user?.role === 'Administrator'" class="import-card">
+  <h2>Importar Publicações (CSV)</h2>
+
+  <input
+    type="file"
+    accept=".csv"
+    @change="onFileSelected"
+    class="file-input"
+  />
+
+  <button
+    @click="importCSV"
+    :disabled="!csvFile || importing"
+    class="btn btn-primary"
+  >
+    {{ importing ? 'A importar...' : 'Importar CSV' }}
+  </button>
+
+  <p v-if="importMessage" class="success-message">{{ importMessage }}</p>
+  <p v-if="importError" class="error-message">{{ importError }}</p>
+</div>
+
+
     <div v-if="loading" class="loading-state">
       <p>A carregar publicações...</p>
     </div>
@@ -135,6 +158,10 @@ const { token } = storeToRefs(authStore)
 const publications = ref([])
 const loading = ref(true)
 const error = ref(null)
+const csvFile = ref(null)
+const importing = ref(false)
+const importMessage = ref(null)
+const importError = ref(null)
 
 const filters = ref({
   search: '',
@@ -217,6 +244,49 @@ onMounted(() => {
     error.value = 'Precisa de fazer login para ver publicações'
   }
 })
+
+function onFileSelected(event) {
+  csvFile.value = event.target.files[0]
+  importMessage.value = null
+  importError.value = null
+}
+
+async function importCSV() {
+  if (!csvFile.value) return
+
+  importing.value = true
+  importMessage.value = null
+  importError.value = null
+
+  try {
+    const formData = new FormData()
+    formData.append('file', csvFile.value)
+
+    const response = await $fetch(`${api}/publications/import-csv`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token.value}`
+      },
+      body: formData
+    })
+
+    importMessage.value =
+      `Importação concluída com sucesso (${response.count} publicações)`
+
+    csvFile.value = null
+
+    // recarregar lista
+    loadPublications()
+
+  } catch (e) {
+    importError.value =
+      'Erro ao importar CSV: ' + (e?.data?.error || e.message || 'Erro desconhecido')
+    console.error(e)
+  } finally {
+    importing.value = false
+  }
+}
+
 </script>
 
 <style scoped>

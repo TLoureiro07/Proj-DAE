@@ -1,6 +1,10 @@
 package pt.ipleria.estg.dei.ei.dae.academics.dtos;
 
-public class UpdateProfileDTO {
+import java.io.Serializable;
+
+public class UpdateProfileDTO implements Serializable {
     public String name;
     public String email;
+
+    public UpdateProfileDTO() {}
 }

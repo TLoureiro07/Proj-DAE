@@ -1,13 +1,11 @@
 package pt.ipleria.estg.dei.ei.dae.academics.dtos;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.io.Serializable;
 import java.util.List;
 import java.util.stream.Collectors;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Publication;
-import pt.ipleria.estg.dei.ei.dae.academics.entities.Tag;
 
-public class PublicationDTO {
+public class PublicationDTO implements Serializable {
     public Long id;
     public String title;
     public List<String> authors;
@@ -15,12 +13,14 @@ public class PublicationDTO {
     public List<TagDTO> tags;
     public String visibility;
     public String owner;
-    public String uploadDate;  // Convertido para String para serialização JSON
+    public String uploadDate;
     public String fileName;
     public String summary;
     public String aiSummary;
     public Double ratingAvg;
-    public String lastEdited;  // Convertido para String para serialização JSON
+    public String lastEdited;
+
+    public PublicationDTO() {}
 
     public static PublicationDTO from(Publication p) {
         PublicationDTO d = new PublicationDTO();
@@ -40,5 +40,9 @@ public class PublicationDTO {
         d.ratingAvg = p.getRatingAvg();
         d.lastEdited = p.getLastEdited() != null ? p.getLastEdited().toString() : null;
         return d;
+    }
+
+    public static List<PublicationDTO> from(List<Publication> publications) {
+        return publications.stream().map(PublicationDTO::from).collect(Collectors.toList());
     }
 }

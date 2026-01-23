@@ -23,20 +23,24 @@ public class EmailBean {
     public void send(String to, String subject, String text) {
         // Run in a background thread to avoid blocking the main request
         Thread emailJob = new Thread(() -> {
+            Message message = new MimeMessage(mailSession);
+            Date timestamp = new Date();
+
             try {
-                Message message = new MimeMessage(mailSession);
                 message.setRecipients(
-                        Message.RecipientType.TO,
-                        InternetAddress.parse(to, false)
-                );
+                    Message.RecipientType.TO,
+                    InternetAddress.parse(to, false));
                 message.setSubject(subject);
                 message.setText(text);
-                message.setSentDate(new Date());
+                message.setSentDate(timestamp);
+
                 Transport.send(message);
+                logger.info("Email sent successfully to: " + to);
             } catch (MessagingException e) {
-                logger.log(Level.SEVERE, "Failed to send email: " + e.getMessage(), e);
+                logger.log(Level.SEVERE, "Failed to send email to " + to, e);
             }
         });
+
         emailJob.start();
     }
 }

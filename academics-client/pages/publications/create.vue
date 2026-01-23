@@ -74,7 +74,7 @@
         </div>
 
         <div class="form-section">
-          <h2>Ficheiro (Opcional)</h2>
+          <h2>Ficheiro</h2>
           <div class="form-group">
             <label for="file">Ficheiro PDF ou ZIP</label>
             <div 
@@ -170,7 +170,7 @@ import { useAuthStore } from "~/stores/auth-store.js"
 const config = useRuntimeConfig()
 const api = config.public.apiBase
 const authStore = useAuthStore()
-const { token } = storeToRefs(authStore)
+const { token, user } = storeToRefs(authStore)
 const router = useRouter()
 
 const fileInput = ref(null)
@@ -333,18 +333,25 @@ async function createPublication() {
       publicationId.value = response.id
 
       // Atualizar com os dados do formulário
+      const updateBody = {
+        title: publicationData.title,
+        scientificArea: publicationData.scientificArea,
+        summary: publicationData.summary,
+        authors: publicationData.authors
+      }
+      
+      // Apenas Responsible/Administrator pode definir visibilidade
+      if (user.value?.role === 'Responsible' || user.value?.role === 'Administrator') {
+        updateBody.visibility = publicationData.visibility
+      }
+      
       await $fetch(`${api}/publications/${response.id}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token.value}`,
           'Content-Type': 'application/json'
         },
-        body: {
-          title: publicationData.title,
-          scientificArea: publicationData.scientificArea,
-          summary: publicationData.summary,
-          visibility: publicationData.visibility
-        }
+        body: updateBody
       })
 
       // Associar tags
@@ -360,13 +367,26 @@ async function createPublication() {
       }
     } else {
       // Criar sem ficheiro
+      const createBody = {
+        title: publicationData.title,
+        scientificArea: publicationData.scientificArea,
+        summary: publicationData.summary,
+        authors: publicationData.authors,
+        tags: publicationData.tags
+      }
+      
+      // Apenas Responsible/Administrator pode definir visibilidade
+      if (user.value?.role === 'Responsible' || user.value?.role === 'Administrator') {
+        createBody.visibility = publicationData.visibility
+      }
+      
       response = await $fetch(`${api}/publications`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token.value}`,
           'Content-Type': 'application/json'
         },
-        body: publicationData
+        body: createBody
       })
 
       publicationId.value = response.id

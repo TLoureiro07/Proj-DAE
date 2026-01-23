@@ -242,3 +242,12 @@ Authorization: Bearer {{token}}
 ### Desinscrever tag
 DELETE {{baseUrl}}/users/admin/tags/1
 Authorization: Bearer {{token}}
+
+### EP06 - Recuperar palavra-passe (envia email com token)
+POST {{baseUrl}}/auth/recover-password
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "admin@example.com"
+}

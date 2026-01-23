@@ -29,6 +29,10 @@
         <button type="submit" :disabled="loading" class="btn btn-primary btn-large">
           {{ loading ? 'A fazer login...' : 'Entrar' }}
         </button>
+
+        <NuxtLink to="/auth/recover-password" class="forgot-password">
+  Esqueci-me da palavra-passe
+</NuxtLink>
       </form>
     </div>
   </div>
@@ -197,4 +201,17 @@ async function login() {
   padding: 1rem;
   font-size: 1.1rem;
 }
+
+.forgot-password {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #667eea;
+  cursor: pointer;
+}
+
+.forgot-password:hover {
+  text-decoration: underline;
+}
+
 </style>

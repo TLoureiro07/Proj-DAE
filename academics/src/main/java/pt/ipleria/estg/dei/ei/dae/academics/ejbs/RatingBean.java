@@ -34,34 +34,28 @@ public class RatingBean {
         User author = userBean.find(authorUsername);
         if (author == null) return null;
 
-        // Verificar se já existe rating deste utilizador para esta publicação
         Rating existingRating = findByUserAndPublication(publicationId, authorUsername);
         
         if (existingRating != null) {
-            // Atualizar rating existente
             existingRating.setValue(value);
             existingRating.setRatingDate(java.time.LocalDateTime.now());
             em.merge(existingRating);
-            
-            // Atualizar média
+            em.flush();
+
             updateRatingAvg(publicationId);
             
-            // Registar atividade
-            userActivityBean.recordActivity(authorUsername, publicationId, "RATING_UPDATE", 
+            userActivityBean.recordActivity(authorUsername, publicationId, "RATING_UPDATE",
                 "Atualizou rating da publicação: " + publication.getTitle());
             
             return existingRating;
         } else {
-            // Criar novo rating
             Rating rating = new Rating(value, author, publication);
             em.persist(rating);
             em.flush();
             
-            // Atualizar média
             updateRatingAvg(publicationId);
             
-            // Registar atividade
-            userActivityBean.recordActivity(authorUsername, publicationId, "RATING", 
+            userActivityBean.recordActivity(authorUsername, publicationId, "RATING",
                 "Avaliou a publicação: " + publication.getTitle());
             
             return rating;
@@ -110,18 +104,20 @@ public class RatingBean {
     }
 
     private void updateRatingAvg(Long publicationId) {
+        Double avg = em.createQuery(
+                        "SELECT AVG(r.value) FROM Rating r WHERE r.publication.id = :pid",
+                        Double.class
+                )
+                .setParameter("pid", publicationId)
+                .getSingleResult();
+
         Publication publication = publicationBean.find(publicationId);
         if (publication == null) return;
 
-        List<Rating> ratings = findByPublication(publicationId);
-        if (ratings.isEmpty()) {
-            publication.setRatingAvg(null);
-        } else {
-            double sum = ratings.stream().mapToInt(Rating::getValue).sum();
-            double avg = sum / ratings.size();
-            publication.setRatingAvg(avg);
-        }
+        publication.setRatingAvg(avg);
         em.merge(publication);
+        em.flush();
     }
+
 }
 

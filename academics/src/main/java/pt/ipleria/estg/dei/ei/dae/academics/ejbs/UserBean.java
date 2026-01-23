@@ -3,6 +3,7 @@ package pt.ipleria.estg.dei.ei.dae.academics.ejbs;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import org.hibernate.Hibernate;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Administrator;
@@ -18,6 +19,11 @@ import pt.ipleria.estg.dei.ei.dae.academics.ejbs.TagBean;
 import pt.ipleria.estg.dei.ei.dae.academics.security.Hasher;
 
 import java.util.List;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 @Stateless
 public class UserBean {
@@ -121,13 +127,17 @@ public class UserBean {
         em.merge(user);
     }
 
-    public void subscribeToTag(String username, Long tagId) {
+    public boolean subscribeToTag(String username, Long tagId) {
         User user = find(username);
         Tag tag = tagBean.find(tagId);
         if (user != null && tag != null) {
+            if (!user.getSubscribedTags().contains(tag)) {
             user.addSubscribedTag(tag);
             em.merge(user);
+                return true;
         }
+        }
+        return false;
     }
 
     public void unsubscribeFromTag(String username, Long tagId) {
@@ -142,9 +152,20 @@ public class UserBean {
     public List<Tag> getSubscribedTags(String username) {
         User user = find(username);
         if (user == null) return List.of();
-        // Inicializar relação lazy antes de retornar
         Hibernate.initialize(user.getSubscribedTags());
         return user.getSubscribedTags();
+    }
+
+    public User findByEmail(String email) {
+        try {
+            return em.createQuery(
+                            "SELECT u FROM User u WHERE u.email = :email",
+                            User.class
+                    ).setParameter("email", email)
+                    .getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
     }
 
     public void delete(String username) {
@@ -153,11 +174,89 @@ public class UserBean {
 
         // Verificar se o utilizador tem publicações
         List<Publication> userPublications = em.createQuery(
-            "SELECT p FROM Publication p WHERE p.owner.username = :username", 
+            "SELECT p FROM Publication p WHERE p.owner.username = :username",
             Publication.class)
             .setParameter("username", username)
             .getResultList();
-        
+
+        if (!userPublications.isEmpty()) {
+            throw new IllegalStateException("Não é possível remover o utilizador porque tem publicações associadas.");
+        }
+
+        // Remover todas as subscrições de tags antes de remover o utilizador
+        List<Tag> subscribedTags = user.getSubscribedTags();
+        for (Tag tag : List.copyOf(subscribedTags)) { // Usar cópia para evitar ConcurrentModificationException
+            user.removeSubscribedTag(tag);
+        }
+        em.flush(); // Sincronizar remoção das relações ManyToMany
+
+        // Remover comentários e ratings do utilizador
+        em.createQuery("DELETE FROM Comment c WHERE c.author.username = :username")
+                .setParameter("username", username)
+                .executeUpdate();
+        em.createQuery("DELETE FROM Rating r WHERE r.author.username = :username")
+                .setParameter("username", username)
+                .executeUpdate();
+        em.createQuery("DELETE FROM UserActivity ua WHERE ua.user.username = :username")
+                .setParameter("username", username)
+                .executeUpdate();
+        em.flush(); // Sincronizar remoção das relações OneToMany
+
+        em.remove(user);
+    }
+
+    public int importFromCSV(InputStream inputStream) throws Exception {
+
+        BufferedReader reader = new BufferedReader(
+                new InputStreamReader(inputStream, StandardCharsets.UTF_8)
+        );
+
+        String line;
+        int count = 0;
+        boolean firstLine = true;
+
+        while ((line = reader.readLine()) != null) {
+
+            if (firstLine) {
+                firstLine = false;
+                continue;
+            }
+
+            if (line.trim().isEmpty()) continue;
+
+            String[] parts = line.split(";", -1);
+
+            if (parts.length < 5) continue;
+
+            String username = parts[0].trim();
+            String password = parts[1].trim();
+            String name     = parts[2].trim();
+            String email    = parts[3].trim();
+            String role = parts[4].trim().replace("\r", "");
+
+            if (find(username) != null) continue;
+
+            User created = create(username, password, name, email, role);
+
+            if (created != null) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    public void delete(String username) {
+        User user = find(username);
+        if (user == null) return;
+
+        // Verificar se o utilizador tem publicações
+        List<Publication> userPublications = em.createQuery(
+            "SELECT p FROM Publication p WHERE p.owner.username = :username",
+            Publication.class)
+            .setParameter("username", username)
+            .getResultList();
+
         if (!userPublications.isEmpty()) {
             throw new IllegalStateException("Não é possível remover o utilizador porque tem publicações associadas.");
         }

@@ -78,15 +78,15 @@ public class ConfigBean {
             testPub.setScientificArea("Ciência de Dados");
             testPub.setSummary("Este artigo explora as aplicações de deep learning no processamento de imagens médicas, apresentando técnicas avançadas de redes neurais convolucionais para diagnóstico assistido por computador.");
             testPub.setVisibility("public");
-            
+
             Publication created = publicationBean.create("collaborator", testPub);
             if (created != null && tagProjetoX != null) {
-                publicationBean.addTag(created.getId(), tagProjetoX.getId());
+                publicationBean.addTag(created.getId(), tagProjetoX.getId(), "collaborator");
                 System.out.println("Created test publication: " + created.getTitle());
             }
             } catch (Exception e) {
                 System.out.println("Warning: Could not create test publication: " + e.getMessage());
-        }
+            }
         }
         */
     }

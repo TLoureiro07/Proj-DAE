@@ -122,7 +122,6 @@ public class Publication {
     public void setLastEdited(LocalDateTime lastEdited) { this.lastEdited = lastEdited; }
 
     public int getVersion() { return version; }
-    // no setter for version (managed by JPA)
 
     public List<PublicationHistory> getHistory() {
         return history;

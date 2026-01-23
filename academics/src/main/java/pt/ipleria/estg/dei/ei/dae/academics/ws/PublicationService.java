@@ -20,6 +20,7 @@ import pt.ipleria.estg.dei.ei.dae.academics.dtos.CommentDTO;
 import pt.ipleria.estg.dei.ei.dae.academics.dtos.RatingDTO;
 import pt.ipleria.estg.dei.ei.dae.academics.dtos.TagDTO;
 import pt.ipleria.estg.dei.ei.dae.academics.dtos.CreateRatingDTO;
+import pt.ipleria.estg.dei.ei.dae.academics.dtos.PublicationHistoryDTO;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Publication;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.PublicationHistory;
 import pt.ipleria.estg.dei.ei.dae.academics.entities.Comment;
@@ -92,11 +93,22 @@ public class PublicationService {
                     .build();
             }
 
+            boolean isResponsible = sc.isUserInRole("Responsible") || sc.isUserInRole("Administrator");
+            String visibility = "internal";
+
+            if (dto.visibility != null && !dto.visibility.trim().isEmpty()) {
+                if (isResponsible) {
+                    visibility = dto.visibility;
+                } else {
+                    visibility = "internal";
+                }
+            }
+
             Publication p = new Publication();
             p.setTitle(dto.title.trim());
             p.setAuthors(dto.authors != null ? dto.authors : new java.util.ArrayList<>());
             p.setScientificArea(dto.scientificArea != null ? dto.scientificArea.trim() : null);
-            p.setVisibility(dto.visibility != null ? dto.visibility : "internal");
+            p.setVisibility(visibility);
             p.setSummary(dto.summary != null ? dto.summary.trim() : null);
 
             String baseText =   "Título: " + p.getTitle() + "\n" +
@@ -113,19 +125,24 @@ public class PublicationService {
                     .build();
             }
 
-            // Associar tags se fornecidas (depois de criar a publicação)
+            java.util.List<String> subscribedTags = new java.util.ArrayList<>();
+
             if (dto.tags != null && !dto.tags.isEmpty()) {
                 for (TagDTO tagDto : dto.tags) {
                     if (tagDto != null && tagDto.id != null) {
                         Tag tag = tagBean.find(tagDto.id);
                         if (tag != null) {
-                            publicationBean.addTag(created.getId(), tag.getId());
+                            boolean wasNewSubscription = publicationBean.wasOwnerSubscribedToTag(created.getId(), tag.getId());
+                            publicationBean.addTag(created.getId(), tag.getId(), null);
+                            if (wasNewSubscription) {
+                                subscribedTags.add(tag.getName());
+                                notifyUserSubscribedToTag(username, tag);
+                            }
                         }
                     }
                 }
             }
 
-            // Recarregar com relações lazy inicializadas
             created = publicationBean.findWithRelations(created.getId());
             if (created == null) {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -144,7 +161,6 @@ public class PublicationService {
         }
     }
 
-    // EP01 - upload de publicação (PDF ou ZIP) - cria publicação diretamente (padrão Ficha 9)
     @POST
     @Path("upload")
     @Authenticated
@@ -167,7 +183,7 @@ public class PublicationService {
             }
 
             InputPart filePart = parts.get(0);
-            String filename = filePart.getFileName(); // Padrão Ficha 9
+            String filename = filePart.getFileName();
             if (filename == null || filename.isEmpty()) {
                 return Response.status(Response.Status.BAD_REQUEST)
                     .entity(Map.of("error", "Filename is required"))
@@ -228,6 +244,20 @@ public class PublicationService {
         Publication p = publicationBean.find(id);
         if (p == null) return Response.status(Response.Status.NOT_FOUND).build();
 
+        User currentUser = userBean.find(editor);
+        if (currentUser == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+
+        boolean isOwner = p.getOwner() != null && p.getOwner().getUsername().equals(editor);
+        boolean isResponsible = sc.isUserInRole("Responsible") || sc.isUserInRole("Administrator");
+
+        if (!isOwner && !isResponsible) {
+            return Response.status(Response.Status.FORBIDDEN)
+                .entity(Map.of("error", "Apenas o dono da publicação ou um Responsible/Administrator pode editar"))
+                .build();
+        }
+
         boolean updated = false;
 
         if (body.containsKey("title") && body.get("title") != null) {
@@ -246,7 +276,26 @@ public class PublicationService {
         }
 
         if (body.containsKey("visibility") && body.get("visibility") != null) {
+            if (!isResponsible) {
+                return Response.status(Response.Status.FORBIDDEN)
+                    .entity(Map.of("error", "Apenas Responsible/Administrator pode alterar a visibilidade"))
+                    .build();
+            }
             p = publicationBean.updateVisibility(id, body.get("visibility").toString(), editor);
+            updated = true;
+        }
+
+        if (body.containsKey("authors") && body.get("authors") != null) {
+            Object authorsObj = body.get("authors");
+            java.util.List<String> authors = new java.util.ArrayList<>();
+            if (authorsObj instanceof java.util.List) {
+                for (Object item : (java.util.List<?>) authorsObj) {
+                    if (item != null) {
+                        authors.add(item.toString());
+                    }
+                }
+            }
+            p = publicationBean.updateAuthors(id, authors, editor);
             updated = true;
         }
 
@@ -255,7 +304,6 @@ public class PublicationService {
                 .entity(Map.of("error", "Nenhum campo válido para atualizar")).build();
         }
 
-        // Recarregar com relações lazy inicializadas
         p = publicationBean.findWithRelations(p.getId());
         if (p == null) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -272,9 +320,39 @@ public class PublicationService {
     @GET
     @Path("{id}/history")
     @Authenticated
-    public Response getHistory(@PathParam("id") Long id) {
-        List<PublicationHistory> history = publicationBean.getHistory(id);
-        return Response.ok(Map.of("publicationId", id, "history", history)).build();
+    public Response getHistory(@PathParam("id") Long id, @Context SecurityContext sc) {
+        try {
+            String username = sc != null && sc.getUserPrincipal() != null
+                    ? sc.getUserPrincipal().getName()
+                    : null;
+
+            Publication p = publicationBean.find(id);
+            if (p == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            User currentUser = userBean.find(username);
+            if (currentUser == null) {
+                return Response.status(Response.Status.UNAUTHORIZED).build();
+            }
+
+            boolean isOwner = p.getOwner() != null && p.getOwner().getUsername().equals(username);
+            boolean isResponsible = sc.isUserInRole("Responsible") || sc.isUserInRole("Administrator");
+
+            if (!isOwner && !isResponsible) {
+                return Response.status(Response.Status.FORBIDDEN)
+                    .entity(Map.of("error", "Apenas o dono da publicação ou um Responsible/Administrator pode ver o histórico"))
+                    .build();
+            }
+
+            List<PublicationHistory> history = publicationBean.getHistory(id);
+            return Response.ok(Map.of("publicationId", id, "history", PublicationHistoryDTO.from(history))).build();
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, "Erro ao obter histórico da publicação " + id, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(Map.of("error", "Erro ao carregar histórico: " + e.getMessage()))
+                .build();
+        }
     }
 
     // EP07 - listar todas as publicações visíveis (com pesquisa e filtros)
@@ -315,6 +393,20 @@ public class PublicationService {
                 return Response.status(Response.Status.UNAUTHORIZED).build();
             }
 
+            Publication p = publicationBean.find(id);
+            if (p == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            boolean isOwner = p.getOwner() != null && p.getOwner().getUsername().equals(username);
+            boolean isResponsible = sc.isUserInRole("Responsible") || sc.isUserInRole("Administrator");
+
+            if (!isOwner && !isResponsible) {
+                return Response.status(Response.Status.FORBIDDEN)
+                    .entity(Map.of("error", "Apenas o dono da publicação ou um Responsible/Administrator pode atualizar o ficheiro"))
+                    .build();
+            }
+
             java.util.List<InputPart> parts = form.getFormDataMap().get("file");
             if (parts == null || parts.isEmpty()) {
                 return Response.status(Response.Status.BAD_REQUEST)
@@ -322,10 +414,10 @@ public class PublicationService {
                     .build();
             }
             InputPart filePart = parts.get(0);
-            String filename = filePart.getFileName(); // Padrão Ficha 9
+            String filename = filePart.getFileName();
             InputStream inputStream = filePart.getBody(InputStream.class, null);
 
-            Publication p = publicationBean.updateFile(id, inputStream, filename, username);
+            p = publicationBean.updateFile(id, inputStream, filename, username);
             if (p == null) return Response.status(Response.Status.NOT_FOUND).build();
 
             // Recarregar com relações lazy inicializadas
@@ -342,7 +434,6 @@ public class PublicationService {
         }
     }
 
-    // Download de ficheiro de publicação (padrão Ficha 9)
     @GET
     @Path("{id}/file")
     @Authenticated
@@ -363,11 +454,8 @@ public class PublicationService {
                     .build();
             }
 
-            // Verificar se o utilizador pode ver esta publicação
-            // Se for o dono, pode sempre ver
             boolean canAccess = p.getOwner() != null && p.getOwner().getUsername().equals(username);
 
-            // Se não for o dono, verificar visibilidade
             if (!canAccess) {
                 if ("hidden".equals(p.getVisibility())) {
                     // Apenas Responsible/Administrator podem ver publicações ocultas
@@ -458,7 +546,6 @@ public class PublicationService {
                 .build();
         }
 
-        // Recarregar com relações lazy carregadas
         comment = commentBean.findWithRelations(comment.getId());
         if (comment == null) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -601,7 +688,6 @@ public class PublicationService {
                 .build();
         }
 
-        // Recarregar com relações lazy carregadas
         rating = ratingBean.findWithRelations(rating.getId());
         if (rating == null) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -681,12 +767,26 @@ public class PublicationService {
                 ? sc.getUserPrincipal().getName()
                 : null;
 
-        Publication p = publicationBean.addTag(publicationId, tagId);
+        Publication p = publicationBean.find(publicationId);
         if (p == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
-        // Recarregar com relações lazy inicializadas
+        Tag tag = tagBean.find(tagId);
+        if (tag == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        boolean wasNewSubscription = false;
+        if (p.getOwner() != null && p.getOwner().getUsername().equals(username)) {
+            wasNewSubscription = publicationBean.wasOwnerSubscribedToTag(publicationId, tagId);
+        }
+
+        p = publicationBean.addTag(publicationId, tagId, username);
+        if (p == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
         p = publicationBean.findWithRelations(p.getId());
         if (p == null) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -694,10 +794,12 @@ public class PublicationService {
                 .build();
         }
 
-        Tag tag = tagBean.find(tagId);
-
-        if (tag != null && username != null) {
+        if (username != null) {
             notifyTagAddedSubscribers(p, tag, username);
+
+            if (wasNewSubscription) {
+                notifyUserSubscribedToTag(username, tag);
+            }
         }
 
         return Response.ok(PublicationDTO.from(p)).build();
@@ -709,8 +811,12 @@ public class PublicationService {
     @Authenticated
     @RolesAllowed({"Responsible", "Administrator"})
     public Response removeTagFromPublication(@PathParam("id") Long publicationId,
-                                           @PathParam("tagId") Long tagId) {
-        Publication p = publicationBean.removeTag(publicationId, tagId);
+                                           @PathParam("tagId") Long tagId,
+                                           @Context SecurityContext sc) {
+        String username = sc != null && sc.getUserPrincipal() != null
+                ? sc.getUserPrincipal().getName()
+                : null;
+        Publication p = publicationBean.removeTag(publicationId, tagId, username);
         if (p == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
@@ -984,6 +1090,221 @@ public class PublicationService {
         }
 
         return Response.ok(PublicationDTO.from(updated)).build();
+    }
+
+
+    // ============================================
+    // send notification email
+    // ============================================
+
+    private void notifyCommentSubscribers(Publication publication,
+                                          Comment comment,
+                                          String commenterUsername) {
+
+        LOG.info("notifyCommentSubscribers called");
+
+        if (publication == null) {
+            LOG.warning("Publication is null, aborting email notification");
+            return;
+        }
+
+        if (publication.getTags() == null) {
+            LOG.warning("Publication has no tags, no notifications to send");
+            return;
+        }
+
+        LOG.info("Publication ID: " + publication.getId() +
+                ", Title: " + publication.getTitle());
+
+        Set<User> recipients = new HashSet<>();
+
+        for (Tag tag : publication.getTags()) {
+            LOG.info("Processing tag: " + tag.getName() +
+                    " (id=" + tag.getId() + ")");
+
+            if (tag.getSubscribedUsers() == null) {
+                LOG.warning("Tag " + tag.getName() + " has null subscribedUsers");
+                continue;
+            }
+
+            LOG.info("Tag " + tag.getName() +
+                    " has " + tag.getSubscribedUsers().size() +
+                    " subscribed users");
+
+            for (User user : tag.getSubscribedUsers()) {
+                LOG.info("Found subscribed user: " + user.getUsername());
+
+                if (!user.getUsername().equals(commenterUsername)) {
+                    recipients.add(user);
+                } else {
+                    LOG.info("Skipping commenter himself: " + commenterUsername);
+                }
+            }
+        }
+
+        LOG.info("Total unique email recipients: " + recipients.size());
+
+        for (User user : recipients) {
+            String subject = "[Academics] Novo comentário numa publicação que segues";
+
+            String body =
+                    "Olá " + user.getName() + ",\n\n" +
+                            "Foi adicionado um novo comentário à publicação:\n\n" +
+                            "Título: " + publication.getTitle() + "\n" +
+                            "Comentário: \"" + comment.getText() + "\"\n\n" +
+                            "Autor do comentário: " + commenterUsername + "\n\n" +
+                            "Recebeste este email porque subscreves uma das tags desta publicação.\n";
+
+            LOG.info("Preparing email to: " + user.getEmail());
+            LOG.fine("Email subject: " + subject);
+            LOG.fine("Email body:\n" + body);
+
+            try {
+                emailBean.send(user.getEmail(), subject, body);
+                LOG.info("Email successfully sent to " + user.getEmail());
+            } catch (Exception e) {
+                LOG.log(Level.SEVERE,
+                        "Failed to send email to " + user.getEmail(),
+                        e);
+            }
+        }
+    }
+
+    private void notifyTagAddedSubscribers(Publication publication, Tag tag, String actorUsername) {
+
+        LOG.info("notifyTagAddedSubscribers called");
+
+        if (publication == null || tag == null) {
+            LOG.warning("Publication or Tag is null, aborting");
+            return;
+        }
+
+        if (tag.getSubscribedUsers() == null || tag.getSubscribedUsers().isEmpty()) {
+            LOG.info("No subscribed users for tag " + tag.getName());
+            return;
+        }
+
+        LOG.info("Tag added: " + tag.getName() +
+                " to publication: " + publication.getTitle());
+
+        for (User user : tag.getSubscribedUsers()) {
+
+            if (user.getUsername().equals(actorUsername)) {
+                LOG.info("Skipping actor himself: " + actorUsername);
+                continue;
+            }
+
+            String subject = "[Academics] Nova publicação associada a uma tag que segues";
+
+            String body =
+                    "Olá " + user.getName() + ",\n\n" +
+                            "Uma publicação foi associada a uma tag que segues.\n\n" +
+                            "Publicação: " + publication.getTitle() + "\n" +
+                            "Tag: " + tag.getName() + "\n\n" +
+                            "Ação realizada por: " + actorUsername + "\n\n";
+
+            LOG.info("Sending tag-added email to " + user.getEmail());
+
+            try {
+                emailBean.send(user.getEmail(), subject, body);
+                LOG.info("Email successfully sent to " + user.getEmail());
+            } catch (Exception e) {
+                LOG.log(Level.SEVERE,
+                        "Failed to send email to " + user.getEmail(), e);
+            }
+        }
+    }
+
+    private void notifyPublicationEditedSubscribers(Publication publication, String editorUsername) {
+
+        LOG.info("notifyPublicationEditedSubscribers called");
+
+        if (publication == null || publication.getTags() == null) {
+            LOG.warning("Publication or tags null, aborting");
+            return;
+        }
+
+        Set<User> recipients = new HashSet<>();
+
+        for (Tag tag : publication.getTags()) {
+            if (tag.getSubscribedUsers() != null) {
+                for (User user : tag.getSubscribedUsers()) {
+                    if (!user.getUsername().equals(editorUsername)) {
+                        recipients.add(user);
+                    }
+                }
+            }
+        }
+
+        LOG.info("Total recipients for edit notification: " + recipients.size());
+
+        for (User user : recipients) {
+
+            String subject = "[Academics] Publicação atualizada";
+
+            String body =
+                    "Olá " + user.getName() + ",\n\n" +
+                            "Uma publicação associada a uma tag que segues foi atualizada.\n\n" +
+                            "Título: " + publication.getTitle() + "\n" +
+                            "Editado por: " + editorUsername + "\n\n";
+
+            LOG.info("Sending edit notification to " + user.getEmail());
+
+            try {
+                emailBean.send(user.getEmail(), subject, body);
+                LOG.info("Email successfully sent to " + user.getEmail());
+            } catch (Exception e) {
+                LOG.log(Level.SEVERE,
+                        "Failed to send email to " + user.getEmail(), e);
+            }
+        }
+    }
+
+    private void notifyUserSubscribedToTag(String username, Tag tag) {
+        User user = userBean.find(username);
+        if (user == null || tag == null) return;
+
+        String subject = "[Academics] A tua publicação foi adicionada à plataforma";
+
+        String body = "Olá " + user.getName() + ",\n\n" +
+                "A tua publicação foi adicionada à plataforma.\n\n" +
+                "Foste automaticamente subscrito na tag: " + tag.getName() + "\n\n" +
+                "Receberás notificações sempre que houver novidades relacionadas com esta tag.";
+
+        try {
+            emailBean.send(user.getEmail(), subject, body);
+            LOG.info("Subscription notification sent to " + user.getEmail());
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, "Failed to send subscription notification to " + user.getEmail(), e);
+        }
+    }
+
+    @POST
+    @Path("/import-csv")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Authenticated
+    @RolesAllowed({"Administrator"})
+    public Response importPublicationsCSV(MultipartFormDataInput input) {
+
+        try {
+            InputPart filePart = input.getFormDataMap().get("file").get(0);
+            InputStream is = filePart.getBody(InputStream.class, null);
+
+            int imported = publicationBean.importFromCSV(is);
+
+            return Response.ok(
+                    Map.of(
+                            "message", "Publicações importadas com sucesso",
+                            "count", imported
+                    )
+            ).build();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", e.getMessage()))
+                    .build();
+        }
     }
 
 }
