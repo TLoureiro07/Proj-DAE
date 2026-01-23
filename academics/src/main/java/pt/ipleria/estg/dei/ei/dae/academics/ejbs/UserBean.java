@@ -245,41 +245,4 @@ public class UserBean {
 
         return count;
     }
-
-    public void delete(String username) {
-        User user = find(username);
-        if (user == null) return;
-
-        // Verificar se o utilizador tem publicações
-        List<Publication> userPublications = em.createQuery(
-            "SELECT p FROM Publication p WHERE p.owner.username = :username",
-            Publication.class)
-            .setParameter("username", username)
-            .getResultList();
-
-        if (!userPublications.isEmpty()) {
-            throw new IllegalStateException("Não é possível remover o utilizador porque tem publicações associadas.");
-        }
-
-        // Remover todas as subscrições de tags antes de remover o utilizador
-        List<Tag> subscribedTags = user.getSubscribedTags();
-        for (Tag tag : List.copyOf(subscribedTags)) { // Usar cópia para evitar ConcurrentModificationException
-            user.removeSubscribedTag(tag);
-        }
-        em.flush(); // Sincronizar remoção das relações ManyToMany
-
-        // Remover comentários e ratings do utilizador
-        em.createQuery("DELETE FROM Comment c WHERE c.author.username = :username")
-                .setParameter("username", username)
-                .executeUpdate();
-        em.createQuery("DELETE FROM Rating r WHERE r.author.username = :username")
-                .setParameter("username", username)
-                .executeUpdate();
-        em.createQuery("DELETE FROM UserActivity ua WHERE ua.user.username = :username")
-                .setParameter("username", username)
-                .executeUpdate();
-        em.flush(); // Sincronizar remoção das relações OneToMany
-
-        em.remove(user);
-    }
 }

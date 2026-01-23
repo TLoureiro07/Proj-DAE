@@ -7,13 +7,7 @@
     <list default="true" id="2acba6e1-8f60-4845-9495-d679c34c27f5" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/academics-client/pages/publications/[id].vue" beforeDir="false" afterPath="$PROJECT_DIR$/academics-client/pages/publications/[id].vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academics-client/pages/publications/create.vue" beforeDir="false" afterPath="$PROJECT_DIR$/academics-client/pages/publications/create.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academics-client/pages/publications/upload.vue" beforeDir="false" afterPath="$PROJECT_DIR$/academics-client/pages/publications/upload.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academics/.env" beforeDir="false" afterPath="$PROJECT_DIR$/academics/.env" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academics/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/academics/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/PublicationDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/PublicationDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ejbs/PublicationBean.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ejbs/PublicationBean.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/entities/Publication.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/entities/Publication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ejbs/UserBean.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ejbs/UserBean.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ws/PublicationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ws/PublicationService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -22,12 +16,17 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="notif_email" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="KubernetesApiPersistence"><![CDATA[{}]]></component>
-  <component name="KubernetesApiProvider"><![CDATA[{
-  "isMigrated": true
-}]]></component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
   &quot;associatedIndex&quot;: 2
@@ -46,7 +45,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "notif__email",
+    "git-widget-placeholder": "dev",
     "ignore.virus.scanning.warn.message": "true",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/dev/Proj-DAE",

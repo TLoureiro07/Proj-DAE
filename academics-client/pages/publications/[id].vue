@@ -316,12 +316,17 @@
 <script setup>
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from "~/stores/auth-store.js"
+import { ref, computed, onMounted } from 'vue'
 
 const route = useRoute()
 const config = useRuntimeConfig()
 const api = config.public.apiBase
 const authStore = useAuthStore()
 const { token, user } = storeToRefs(authStore)
+const editableAiSummary = ref('')
+const savingAiSummary = ref(false)
+const generatingAiSummary = ref(false)
+const canGenerateAiSummary = computed(() => isOwner.value || isResponsible.value)
 
 const publicationId = route.params.id
 
@@ -589,71 +594,6 @@ async function saveAiSummary() {
     alert('Erro ao guardar resumo IA: ' + (e.message || 'Erro desconhecido'))
   } finally {
     savingAiSummary.value = false
-  }
-}
-
-async function togglePublicationVisibility() {
-  if (!isResponsible.value) return
-
-  updatingVisibility.value = true
-  try {
-    const newVisibility = publication.value.visibility === 'hidden' ? 'public' : 'hidden'
-    await $fetch(`${api}/publications/${publicationId}`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${token.value}`,
-        'Content-Type': 'application/json'
-      },
-      body: { visibility: newVisibility }
-    })
-    await loadPublication()
-    alert(`Publicação ${newVisibility === 'hidden' ? 'ocultada' : 'mostrada'} com sucesso!`)
-  } catch (e) {
-    alert('Erro ao alterar visibilidade: ' + (e.message || 'Erro desconhecido'))
-  } finally {
-    updatingVisibility.value = false
-  }
-}
-
-async function removeTag(tagId) {
-  if (!isResponsible.value) return
-  if (!confirm('Tens a certeza que queres desassociar esta tag da publicação?')) return
-
-  removingTag.value = true
-  try {
-    await $fetch(`${api}/publications/${publicationId}/tags/${tagId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token.value}`
-      }
-    })
-    await loadPublication()
-    alert('Tag desassociada com sucesso!')
-  } catch (e) {
-    alert('Erro ao desassociar tag: ' + (e.message || 'Erro desconhecido'))
-  } finally {
-    removingTag.value = false
-  }
-}
-
-async function toggleCommentHidden(commentId, newHiddenState) {
-  if (!isResponsible.value) return
-
-  togglingComment.value = true
-  try {
-    await $fetch(`${api}/publications/${publicationId}/comments/${commentId}/hidden`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${token.value}`,
-        'Content-Type': 'application/json'
-      },
-      body: { hidden: newHiddenState }
-    })
-    await loadComments()
-  } catch (e) {
-    alert('Erro ao alterar estado do comentário: ' + (e.message || 'Erro desconhecido'))
-  } finally {
-    togglingComment.value = false
   }
 }
 

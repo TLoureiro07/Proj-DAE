@@ -1,0 +1,106 @@
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"AutoImportSettings\">\r\n    <option name=\"autoReloadType\" value=\"SELECTIVE\" />\r\n  </component>\r\n  <component name=\"ChangeListManager\">\r\n    <list default=\"true\" id=\"2acba6e1-8f60-4845-9495-d679c34c27f5\" name=\"Changes\" comment=\"\">\r\n      <change beforePath=\"$PROJECT_DIR$/.idea/workspace.xml\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/.idea/workspace.xml\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/academics-client/pages/publications/[id].vue\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/academics-client/pages/publications/[id].vue\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/academics-client/pages/publications/create.vue\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/academics-client/pages/publications/create.vue\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/academics-client/pages/publications/upload.vue\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/academics-client/pages/publications/upload.vue\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/academics/.env\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/academics/.env\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/academics/pom.xml\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/academics/pom.xml\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/PublicationDTO.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/PublicationDTO.java\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ejbs/PublicationBean.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ejbs/PublicationBean.java\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/entities/Publication.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/entities/Publication.java\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ws/PublicationService.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ws/PublicationService.java\" afterDir=\"false\" />\r\n    </list>\r\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\r\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\r\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\r\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\r\n  </component>\r\n  <component name=\"Git.Settings\">\r\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\r\n  </component>\r\n  <component name=\"KubernetesApiPersistence\"><![CDATA[{}]]></component>\r\n  <component name=\"KubernetesApiProvider\"><![CDATA[{\r\n  \"isMigrated\": true\r\n}]]></component>\r\n  <component name=\"ProjectColorInfo\">{\r\n  &quot;customColor&quot;: &quot;&quot;,\r\n  &quot;associatedIndex&quot;: 2\r\n}</component>\r\n  <component name=\"ProjectId\" id=\"38XZNhvDKkQbRUl36hTqBLX2619\" />\r\n  <component name=\"ProjectLevelVcsManager\">\r\n    <ConfirmationsSetting value=\"1\" id=\"Add\" />\r\n  </component>\r\n  <component name=\"ProjectViewState\">\r\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\r\n    <option name=\"showLibraryContents\" value=\"true\" />\r\n  </component>\r\n  <component name=\"PropertiesComponent\"><![CDATA[{\r\n  \"keyToString\": {\r\n    \"ModuleVcsDetector.initialDetectionPerformed\": \"true\",\r\n    \"RunOnceActivity.ShowReadmeOnStart\": \"true\",\r\n    \"RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252\": \"true\",\r\n    \"RunOnceActivity.git.unshallow\": \"true\",\r\n    \"git-widget-placeholder\": \"notif__email\",\r\n    \"ignore.virus.scanning.warn.message\": \"true\",\r\n    \"kotlin-language-version-configured\": \"true\",\r\n    \"last_opened_file_path\": \"C:/dev/Proj-DAE\",\r\n    \"node.js.detected.package.eslint\": \"true\",\r\n    \"node.js.detected.package.tslint\": \"true\",\r\n    \"node.js.selected.package.eslint\": \"(autodetect)\",\r\n    \"node.js.selected.package.tslint\": \"(autodetect)\",\r\n    \"nodejs_package_manager_path\": \"npm\",\r\n    \"project.structure.last.edited\": \"Project\",\r\n    \"project.structure.proportion\": \"0.0\",\r\n    \"project.structure.side.proportion\": \"0.0\",\r\n    \"ts.external.directory.path\": \"C:\\\\Program Files\\\\JetBrains\\\\IntelliJ IDEA 2025.2.2\\\\plugins\\\\javascript-plugin\\\\jsLanguageServicesImpl\\\\external\",\r\n    \"vue.rearranger.settings.migration\": \"true\"\r\n  }\r\n}]]></component>\r\n  <component name=\"RecentsManager\">\r\n    <key name=\"CopyFile.RECENT_KEYS\">\r\n      <recent name=\"C:\\dev\\DAE\\Proj-DAE\\academics\\src\\main\\java\\pt\\ipleria\\estg\\dei\\ei\\dae\\academics\\ejbs\" />\r\n    </key>\r\n  </component>\r\n  <component name=\"RunAnythingCache\">\r\n    <option name=\"myCommands\">\r\n      <command value=\"cd\" />\r\n    </option>\r\n  </component>\r\n  <component name=\"SharedIndexes\">\r\n    <attachedChunks>\r\n      <set>\r\n        <option value=\"bundled-jdk-9823dce3aa75-bf35d07a577b-intellij.indexing.shared.core-IU-252.26199.169\" />\r\n        <option value=\"bundled-js-predefined-d6986cc7102b-9c94529fcfe0-JavaScript-IU-252.26199.169\" />\r\n      </set>\r\n    </attachedChunks>\r\n  </component>\r\n  <component name=\"TaskManager\">\r\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\r\n      <changelist id=\"2acba6e1-8f60-4845-9495-d679c34c27f5\" name=\"Changes\" comment=\"\" />\r\n      <created>1768947839562</created>\r\n      <option name=\"number\" value=\"Default\" />\r\n      <option name=\"presentableId\" value=\"Default\" />\r\n      <updated>1768947839562</updated>\r\n      <workItem from=\"1768947841317\" duration=\"18226000\" />\r\n      <workItem from=\"1769115953808\" duration=\"30661000\" />\r\n    </task>\r\n    <servers />\r\n  </component>\r\n  <component name=\"TypeScriptGeneratedFilesManager\">\r\n    <option name=\"version\" value=\"3\" />\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	(revision c2abd841635b1a062e45d9e717a04fc2e32d8bf5)
++++ b/.idea/workspace.xml	(date 1769204763312)
+@@ -5,16 +5,58 @@
+   </component>
+   <component name="ChangeListManager">
+     <list default="true" id="2acba6e1-8f60-4845-9495-d679c34c27f5" name="Changes" comment="">
+-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/academics-client/pages/auth/recover-password.vue" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/academics-client/pages/reset-password.vue" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/PublicationHistoryDTO.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/RecoverPasswordDTO.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/ResetPasswordDTO.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ejbs/PasswordResetBean.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/entities/PasswordResetToken.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/publicacoes.csv" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/users.csv" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/ProjDaePdfsEmTxt/extract_pdfs.py" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/ProjDaePdfsEmTxt/pdf_texts/DAE-2025-26-1S-ENUNCIADO_PROJETO.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/ProjDaePdfsEmTxt/pdf_texts/EI_DAE_2025-26_Ficha2.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/ProjDaePdfsEmTxt/pdf_texts/EI_DAE_2025_2026_FICHA6_v2.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/ProjDaePdfsEmTxt/pdf_texts/EI_DAE_2025_2026_FICHA7_v3.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/ProjDaePdfsEmTxt/pdf_texts/EI_DAE_2025_2026_FICHA8.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/ProjDaePdfsEmTxt/pdf_texts/EI_DAE_2025_2026_FICHA9.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/ProjDaePdfsEmTxt/pdf_texts/EI_DAE_2025_2026_Ficha3.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/ProjDaePdfsEmTxt/pdf_texts/EI_DAE_2025_2026_Ficha4.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/ProjDaePdfsEmTxt/pdf_texts/EI_DAE_2025_2026_Ficha5.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/ProjDaePdfsEmTxt/pdf_texts/EI_DAE_2025_26_Ficha1.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics-client/pages/auth/login.vue" beforeDir="false" afterPath="$PROJECT_DIR$/academics-client/pages/auth/login.vue" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/academics-client/pages/publications/[id].vue" beforeDir="false" afterPath="$PROJECT_DIR$/academics-client/pages/publications/[id].vue" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/academics-client/pages/publications/create.vue" beforeDir="false" afterPath="$PROJECT_DIR$/academics-client/pages/publications/create.vue" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/academics-client/pages/publications/upload.vue" beforeDir="false" afterPath="$PROJECT_DIR$/academics-client/pages/publications/upload.vue" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/academics/.env" beforeDir="false" afterPath="$PROJECT_DIR$/academics/.env" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/academics/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/academics/pom.xml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics-client/pages/publications/index.vue" beforeDir="false" afterPath="$PROJECT_DIR$/academics-client/pages/publications/index.vue" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics-client/pages/publications/my.vue" beforeDir="false" afterPath="$PROJECT_DIR$/academics-client/pages/publications/my.vue" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics-client/pages/users/index.vue" beforeDir="false" afterPath="$PROJECT_DIR$/academics-client/pages/users/index.vue" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/academics/.idea/vcs.xml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics/mvnw" beforeDir="false" afterPath="$PROJECT_DIR$/academics/mvnw" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics/sample-requests.http" beforeDir="false" afterPath="$PROJECT_DIR$/academics/sample-requests.http" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/AcademicsApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/AcademicsApplication.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/ChangePasswordDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/ChangePasswordDTO.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/CommentDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/CommentDTO.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/CreateRatingDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/CreateRatingDTO.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/CreateUserDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/CreateUserDTO.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/EmailDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/EmailDTO.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/LoginDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/LoginDTO.java" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/PublicationDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/PublicationDTO.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/RatingDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/RatingDTO.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/SetActiveDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/SetActiveDTO.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/TagDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/TagDTO.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/UpdateProfileDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/UpdateProfileDTO.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/UserDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/dtos/UserDTO.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ejbs/ConfigBean.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ejbs/ConfigBean.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ejbs/EmailBean.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ejbs/EmailBean.java" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ejbs/PublicationBean.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ejbs/PublicationBean.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ejbs/RatingBean.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ejbs/RatingBean.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ejbs/UserBean.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ejbs/UserBean.java" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/entities/Publication.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/entities/Publication.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/entities/PublicationHistory.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/entities/PublicationHistory.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ws/AuthService.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ws/AuthService.java" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ws/PublicationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ws/PublicationService.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ws/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/academics/src/main/java/pt/ipleria/estg/dei/ei/dae/academics/ws/UserService.java" afterDir="false" />
+     </list>
+     <option name="SHOW_DIALOG" value="false" />
+     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+@@ -24,10 +66,10 @@
+   <component name="Git.Settings">
+     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+   </component>
+-  <component name="KubernetesApiPersistence"><![CDATA[{}]]></component>
+-  <component name="KubernetesApiProvider"><![CDATA[{
+-  "isMigrated": true
+-}]]></component>
++  <component name="KubernetesApiPersistence">{}</component>
++  <component name="KubernetesApiProvider">{
++  &quot;isMigrated&quot;: true
++}</component>
+   <component name="ProjectColorInfo">{
+   &quot;customColor&quot;: &quot;&quot;,
+   &quot;associatedIndex&quot;: 2
+@@ -46,7 +88,7 @@
+     "RunOnceActivity.ShowReadmeOnStart": "true",
+     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+     "RunOnceActivity.git.unshallow": "true",
+-    "git-widget-placeholder": "notif__email",
++    "git-widget-placeholder": "Merging dev",
+     "ignore.virus.scanning.warn.message": "true",
+     "kotlin-language-version-configured": "true",
+     "last_opened_file_path": "C:/dev/Proj-DAE",
+@@ -88,7 +130,7 @@
+       <option name="presentableId" value="Default" />
+       <updated>1768947839562</updated>
+       <workItem from="1768947841317" duration="18226000" />
+-      <workItem from="1769115953808" duration="30661000" />
++      <workItem from="1769115953808" duration="31852000" />
+     </task>
+     <servers />
+   </component>
